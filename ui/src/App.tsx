@@ -293,8 +293,9 @@ export default function App() {
         currencyLabel(currency),
       );
     }
-    if (currency === "capital_one") return "Capital One portal";
-    return `${currencyLabel(currency)} portal (approx)`;
+    const opt = CURRENCIES.find((c) => c.id === currency);
+    if (opt?.hasPortal) return `${opt.label} portal`;
+    return `${currencyLabel(currency)} (no portal floor yet)`;
   }, [result, currency]);
 
   const displayCpp = useMemo(() => {

@@ -30,6 +30,7 @@ _debug_dumps/
 
 # Personal planning / discovery docs (Cursor agent briefs, architecture notes)
 Cursor-*.md
+Cursor-Mileage-Beta.md
 Mileage-Plan.md
 mileage-ui-mockup.html
 

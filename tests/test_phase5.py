@@ -48,7 +48,19 @@ ROUTE_B = Route("LAX", "IST", Cabin.BUSINESS)
 # 1 — tracing is optional and a no-op without deps/creds
 # --------------------------------------------------------------------------- #
 def test_tracing_optional_noop() -> None:
-    # No ARIZE creds + no console flag -> tracing stays inactive, never raises.
+    # Hermetic: clear any developer .env creds and reset module globals so this
+    # asserts the no-op path even when ARIZE_* is present outside the suite.
+    for key in (
+        "ARIZE_SPACE_ID",
+        "ARIZE_SPACE",
+        "ARIZE_API_KEY",
+        "MILEAGE_TRACE_CONSOLE",
+    ):
+        _os.environ.pop(key, None)
+    obs.shutdown_tracing()
+    obs._provider = None  # noqa: SLF001
+    obs._enabled = False  # noqa: SLF001
+
     assert obs.setup_tracing(project_name="mileage-test") is False
     with obs.span("noop", obs.KIND_CHAIN, input_value="x") as s:
         # Helpers must be safe even when the span is a no-op (None).

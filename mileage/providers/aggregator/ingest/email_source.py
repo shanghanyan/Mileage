@@ -174,8 +174,12 @@ def _imap_documents(
     return docs
 
 
+# Gmail IMAP trash mailbox — brackets are part of the mailbox name.
+_GMAIL_TRASH = "[Gmail]" + "/Trash]"
+
+
 def _delete_processed(address: str, app_password: str, uids: List[str]) -> int:
-    """Move already-processed messages to [Gmail]/Trash by UID.
+    """Move already-processed messages to Gmail IMAP Trash by UID.
 
     A soft delete, not a hard one: Gmail keeps trashed mail ~30 days before
     permanent purge, so this is recoverable if something was moved that
@@ -193,7 +197,7 @@ def _delete_processed(address: str, app_password: str, uids: List[str]) -> int:
         conn.select("INBOX", readonly=False)
         for uid in uids:
             try:
-                typ, _ = conn.uid("COPY", uid, "[Gmail]/Trash")
+                typ, _ = conn.uid("COPY", uid, _GMAIL_TRASH)
                 if typ != "OK":
                     log.info("delete: COPY to Trash failed for uid %s", uid)
                     continue

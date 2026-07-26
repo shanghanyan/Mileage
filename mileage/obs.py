@@ -136,8 +136,9 @@ def setup_tracing(project_name: Optional[str] = None) -> bool:
 def shutdown_tracing() -> None:
     """Flush + shut down the exporter. Critical for short-lived CLI runs so
     async OTLP exports are not dropped on exit."""
-    global _enabled
+    global _provider, _enabled
     if _provider is None:
+        _enabled = False
         return
     try:
         if hasattr(_provider, "force_flush"):
@@ -147,6 +148,7 @@ def shutdown_tracing() -> None:
     except Exception as exc:  # pragma: no cover - best effort
         log.debug("tracing shutdown error: %s", exc)
     finally:
+        _provider = None
         _enabled = False
 
 

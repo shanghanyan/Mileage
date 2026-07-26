@@ -134,7 +134,10 @@ class Config:
             db_path=os.getenv("MILEAGE_DB", "mileage.db"),
             aggregator_enabled=os.getenv("MILEAGE_NO_AGGREGATOR", "") == "",
             disabled_providers=disabled,
-            redis_url=os.getenv("MILEAGE_REDIS_URL") or None,
+            # Prefer MILEAGE_REDIS_URL; accept REDIS_URL as a common alias.
+            redis_url=os.getenv("MILEAGE_REDIS_URL")
+            or os.getenv("REDIS_URL")
+            or None,
             auth_enabled=os.getenv("MILEAGE_AUTH", "") not in ("", "0", "false"),
             offline=os.getenv("MILEAGE_OFFLINE", "") not in ("", "0", "false"),
             gmail_address=os.getenv("GMAIL_ADDRESS") or None,

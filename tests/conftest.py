@@ -22,9 +22,41 @@ import os
 import tempfile
 
 os.environ.setdefault("MILEAGE_OFFLINE", "1")
-# Keep live API providers self-disabled (no keys) and Redis out of the way.
-os.environ.pop("MILEAGE_REDIS_URL", None)
 if not os.environ.get("MILEAGE_DB") or os.environ["MILEAGE_DB"] == "mileage.db":
     os.environ["MILEAGE_DB"] = os.path.join(
         tempfile.gettempdir(), "mileage_test_suite.db"
     )
+
+# Trigger dotenv load (mileage.config), then scrub live creds so the suite stays
+# hermetic even when the developer has a populated .env (Arize/Redis/Amadeus).
+try:
+    import mileage.config  # noqa: F401
+except Exception:
+    pass
+
+for _key in (
+    "MILEAGE_REDIS_URL",
+    "REDIS_URL",
+    "ARIZE_SPACE_ID",
+    "ARIZE_SPACE",
+    "ARIZE_API_KEY",
+    "MILEAGE_TRACE_CONSOLE",
+    "AMADEUS_CLIENT_ID",
+    "AMADEUS_CLIENT_SECRET",
+    "SEATS_AERO_API_KEY",
+    "GMAIL_ADDRESS",
+    "GMAIL_APP_PASSWORD",
+    "BING_SEARCH_API_KEY",
+    "SERPAPI_API_KEY",
+):
+    os.environ.pop(_key, None)
+
+# Reset tracing globals if a prior import enabled them with real creds.
+try:
+    from mileage import obs as _obs
+
+    _obs.shutdown_tracing()
+    _obs._provider = None  # noqa: SLF001 — test isolation
+    _obs._enabled = False  # noqa: SLF001
+except Exception:
+    pass

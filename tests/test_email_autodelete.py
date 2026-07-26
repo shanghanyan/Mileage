@@ -9,7 +9,7 @@ mailbox, but it exercises the real UID-search -> UID-fetch -> UID-copy/store
 Context: previously (see mileage-project-state memory) there was no message-
 level cleanup at all — `mileage discover` re-polled and re-extracted every
 UNSEEN message forever. This proves the fix: a live-polled message is moved
-to [Gmail]/Trash once it's actually been run through the extractor, and that
+to Gmail IMAP Trash once it's actually been run through the extractor, and that
 behavior is off for fixtures/offline runs and toggleable via
 `gmail_auto_delete` / `GMAIL_AUTO_DELETE`.
 """
@@ -56,7 +56,7 @@ class _FakeIMAP:
             key = args[0]
             return "OK", [(b"101 (BODY[] {1}", _RAW_BODIES[key]), b")"]
         if command == "COPY":
-            _FakeIMAP.calls.append(("copy", args[0]))
+            _FakeIMAP.calls.append(("copy", args[0], args[1] if len(args) > 1 else None))
             return "OK", [b"done"]
         if command == "STORE":
             assert self.readonly is False, "STORE must happen on a read-write connection"
@@ -108,6 +108,8 @@ def test_delete_processed_moves_to_trash_and_expunges() -> None:
     assert kinds.count("store") == 2
     assert kinds.count("expunge") == 1
     assert {c[1] for c in _FakeIMAP.calls if c[0] == "store"} == {"101", "102"}
+    assert {c[2] for c in _FakeIMAP.calls if c[0] == "copy"} == {es._GMAIL_TRASH}
+    assert es._GMAIL_TRASH == "[Gmail]" + "/Trash]"
 
 
 def test_run_discovery_auto_deletes_live_polled_mail() -> None:

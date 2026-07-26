@@ -37,28 +37,29 @@ export const CURRENCIES: CurrencyOption[] = [
     label: "Chase UR",
     short: "UR",
     defaultMiles: 100_000,
-    hasPortal: true,
+    // Portal floor modeled for Cap One only today.
+    hasPortal: false,
   },
   {
     id: "amex_mr",
     label: "Amex MR",
     short: "MR",
     defaultMiles: 100_000,
-    hasPortal: true,
+    hasPortal: false,
   },
   {
     id: "citi_typ",
     label: "Citi ThankYou",
     short: "TYP",
     defaultMiles: 80_000,
-    hasPortal: true,
+    hasPortal: false,
   },
   {
     id: "bilt",
     label: "Bilt",
     short: "Bilt",
     defaultMiles: 50_000,
-    hasPortal: true,
+    hasPortal: false,
   },
 ];
 
