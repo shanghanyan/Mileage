@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mileage | Settings &amp; Points Wallet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        .ambient-shadow {
+            box-shadow: 0 8px 24px rgba(95, 122, 102, 0.08);
+        }
+        .ring-accent {
+            border: 1px solid #DCDEDC;
+        }
+        body {
+            background-color: #f8faf8;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            background-color: #5F7A66;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #ccead1;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e7e9e7",
+                        "secondary-fixed": "#ccead1",
+                        "primary": "#47614e",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e1e3e1",
+                        "on-primary-fixed-variant": "#334c3b",
+                        "surface-container-low": "#f2f4f2",
+                        "outline-variant": "#c2c8c1",
+                        "inverse-on-surface": "#eff1ef",
+                        "inverse-surface": "#2e3130",
+                        "primary-fixed-dim": "#b1ceb6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#131e16",
+                        "inverse-primary": "#b1ceb6",
+                        "on-surface-variant": "#424843",
+                        "surface": "#f8faf8",
+                        "on-primary-container": "#f0fff1",
+                        "background": "#f8faf8",
+                        "on-primary-fixed": "#072011",
+                        "on-surface": "#191c1b",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#bdcabd",
+                        "secondary": "#4a6450",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#ccead2",
+                        "primary-container": "#5f7a66",
+                        "secondary-fixed-dim": "#b1ceb5",
+                        "on-tertiary-fixed-variant": "#3e4a40",
+                        "surface-tint": "#4a6451",
+                        "surface-variant": "#e1e3e1",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#eceeec",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#334c3a",
+                        "on-secondary-container": "#506a56",
+                        "outline": "#737972",
+                        "on-secondary-fixed": "#072011",
+                        "on-background": "#191c1b",
+                        "on-tertiary-container": "#f2fff1",
+                        "surface-bright": "#f8faf8",
+                        "tertiary-container": "#6b776c",
+                        "surface-dim": "#d8dad8",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#ccead1",
+                        "tertiary": "#525e54",
+                        "tertiary-fixed": "#d9e6d9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "32px",
+                        "container-padding": "20px",
+                        "base": "4px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "gutter": "12px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "display-cpp": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-caps": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "title-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "display-cpp": ["40px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+
+<link rel="stylesheet" href="/stitch/shared/unsupported.css"/>
+<script src="/stitch/shared/mileage-api.js"></script>
+</head>
+<body class="sage-stable font-body-lg text-on-surface mb-24 overflow-x-hidden min-h-screen">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl flex justify-between items-center px-container-padding py-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">flight_takeoff</span>
+<h1 class="font-display-cpp text-title-md text-primary tracking-tight">Mileage</h1>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity cursor-pointer">account_balance_wallet</span>
+</div>
+</header>
+<main class="mt-20 px-container-padding space-y-lg">
+<!-- Animated Background Element -->
+<div class="fixed inset-0 pointer-events-none opacity-30 z-[-1]">
+</div>
+<!-- Hero Title -->
+<section class="pt-base">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Configuration Hub</h2>
+<p class="font-body-sm text-outline mt-base">Refine your travel preferences and manage assets.</p>
+</section>
+
+<!-- Home airport (persisted) -->
+<section class="space-y-md relative">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-label-caps text-label-caps text-outline uppercase">Home airport</h3>
+</div>
+<div class="glass-card ambient-shadow rounded-xl p-md space-y-sm">
+<p class="font-body-sm text-outline">Origin for searches — must be a 3-letter IATA code. Same value as Home → Change origin.</p>
+<div class="flex gap-xs items-center">
+<input id="wallet-origin" maxlength="3" class="flex-1 uppercase tracking-widest bg-surface-container-low border-2 border-outline-variant focus:border-primary focus:ring-0 rounded-xl px-md py-sm font-body-lg" placeholder="LAX" type="text"/>
+<button type="button" id="wallet-save-origin" class="bg-primary text-white font-label-caps text-label-caps px-md py-sm rounded-xl">Save</button>
+</div>
+<p id="wallet-origin-status" class="font-body-sm text-outline"></p>
+</div>
+</section>
+
+<!-- Section 1: Preferences -->
+<section class="space-y-md relative">
+<details class="ns-tip">
+<summary title="Not supported yet"><span class="material-symbols-outlined">info</span></summary>
+<div class="ns-panel"><strong>Beta gap</strong>Nonstop / morning / multi-cabin prefs are design-only — not applied to ranking yet.</div>
+</details>
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-label-caps text-label-caps text-outline uppercase">Preferences</h3>
+</div>
+<div class="glass-card ambient-shadow rounded-xl p-md space-y-lg">
+<!-- Flight Classes -->
+<div>
+<span class="font-label-caps text-label-caps text-primary block mb-sm">FLIGHT CLASSES</span>
+<div class="grid grid-cols-2 gap-xs">
+<label class="flex items-center justify-between p-sm rounded-lg border border-outline-variant bg-surface-container-lowest transition-all hover:border-primary active:scale-95 duration-200">
+<span class="font-body-sm">Economy</span>
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-sm rounded-lg border border-outline-variant bg-surface-container-lowest transition-all hover:border-primary active:scale-95 duration-200">
+<span class="font-body-sm">Prem Econ</span>
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-sm rounded-lg border-primary bg-secondary-container/30 transition-all active:scale-95 duration-200">
+<span class="font-body-sm font-semibold">Business</span>
+<input checked="" class="w-5 h-5 rounded border-primary text-primary focus:ring-primary" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-sm rounded-lg border-primary bg-secondary-container/30 transition-all active:scale-95 duration-200">
+<span class="font-body-sm font-semibold">First</span>
+<input checked="" class="w-5 h-5 rounded border-primary text-primary focus:ring-primary" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Max Stops -->
+<div>
+<span class="font-label-caps text-label-caps text-primary block mb-sm">MAX STOPS</span>
+<div class="flex bg-surface-container-high p-1 rounded-full w-full">
+<button class="flex-1 py-xs text-center font-label-caps text-label-caps rounded-full bg-primary text-on-primary shadow-sm transition-all">NONSTOP</button>
+<button class="flex-1 py-xs text-center font-label-caps text-label-caps rounded-full text-outline hover:text-primary transition-colors">1 STOP</button>
+<button class="flex-1 py-xs text-center font-label-caps text-label-caps rounded-full text-outline hover:text-primary transition-colors">ANY</button>
+</div>
+</div>
+<!-- Departure Time -->
+<div class="flex items-center justify-between">
+<div>
+<span class="font-body-lg font-semibold block">Departure Time</span>
+<span class="font-body-sm text-outline">Prefer morning flights</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-transparent shadow-md right-0" id="toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-secondary-container cursor-pointer" for="toggle"></label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Wallet -->
+<section class="space-y-md relative">
+<details class="ns-tip">
+<summary title="Not supported yet"><span class="material-symbols-outlined">info</span></summary>
+<div class="ns-panel"><strong>Beta gap</strong>Multi-card wallet sliders are not persisted. Cap One portal math only until other portals are modeled.</div>
+</details>
+<div class="flex items-center justify-between mb-sm">
+<div class="flex items-center gap-xs">
+<h3 class="font-label-caps text-label-caps text-outline uppercase">Credit Cards &amp; Loyalty</h3>
+<span class="material-symbols-outlined text-outline text-[16px] cursor-help">info</span>
+</div>
+</div>
+<div class="glass-card ambient-shadow rounded-xl p-md ring-accent space-y-md">
+<!-- Points Calculator Style Wallet -->
+<div class="space-y-md">
+<!-- Venture X -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-6 bg-gradient-to-br from-slate-700 to-slate-900 rounded-sm shadow-sm"></div>
+<span class="font-body-sm font-semibold">Capital One Venture X</span>
+</div>
+<span class="font-display-cpp text-[16px] text-primary">~90,000 pts</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" max="200000" min="0" type="range" value="90000"/>
+</div>
+<!-- Amex Plat -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-6 bg-gradient-to-br from-zinc-300 to-zinc-400 rounded-sm shadow-sm border border-zinc-500/20"></div>
+<span class="font-body-sm font-semibold">Amex Platinum</span>
+</div>
+<span class="font-display-cpp text-[16px] text-primary">~120,000 pts</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" max="300000" min="0" type="range" value="120000"/>
+</div>
+<!-- Chase Sapphire -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-6 bg-gradient-to-br from-blue-700 to-blue-900 rounded-sm shadow-sm"></div>
+<span class="font-body-sm font-semibold">Chase Sapphire Reserve</span>
+</div>
+<span class="font-display-cpp text-[16px] text-primary">~60,000 pts</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" max="150000" min="0" type="range" value="60000"/>
+</div>
+<!-- Aeroplan -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-6 bg-gradient-to-br from-red-600 to-red-800 rounded-sm shadow-sm flex items-center justify-center">
+<span class="text-[8px] text-white font-bold">🍁</span>
+</div>
+<span class="font-body-sm font-semibold">Aeroplan</span>
+</div>
+<span class="font-display-cpp text-[16px] text-primary">~25,000 miles</span>
+</div>
+<input class="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" max="100000" min="0" type="range" value="25000"/>
+</div>
+</div>
+<!-- CTA -->
+<button class="w-full flex items-center justify-center gap-sm py-md mt-md rounded-full border-2 border-dashed border-outline-variant text-primary font-title-md hover:bg-surface-container-low transition-colors duration-200">
+<span class="material-symbols-outlined">add_circle</span>
+<span>+ Add another card or airline balance</span>
+</button>
+</div>
+</section>
+<!-- Pointy Mascot (Subtle Visual) -->
+<div class="flex justify-center pt-lg opacity-20 scale-75">
+<svg fill="none" height="48" stroke="#5F7A66" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" width="48">
+<path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"></path>
+</svg>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-lg pt-sm bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl rounded-t-xl shadow-[0_-8px_24px_rgba(95,122,102,0.08)] border-t border-outline-variant dark:border-outline">
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" href="/stitch/1._quick_search/code.html">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" href="/stitch/2._trips_saved/code.html">
+<span class="material-symbols-outlined mb-1">bookmark</span>
+<span class="font-label-caps text-label-caps">Saved</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" href="/stitch/5._wishlist/code.html">
+<span class="material-symbols-outlined mb-1">favorite</span>
+<span class="font-label-caps text-label-caps">Wishlist</span>
+</a>
+<!-- Active Tab: Wallet/Settings maps to the wallet icon -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-transform duration-150" href="/stitch/4._wallet_settings/code.html">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps">Wallet</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for range sliders
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const valueDisplay = this.closest('.flex-col').querySelector('.font-display-cpp');
+                const val = parseInt(this.value).toLocaleString();
+                const unit = this.closest('.flex-col').querySelector('.font-body-sm').textContent.includes('Aeroplan') ? 'miles' : 'pts';
+                valueDisplay.textContent = `~${val} ${unit}`;
+                
+                // Add a little scale effect on the value when changing
+                valueDisplay.classList.add('scale-110', 'text-primary-container');
+                setTimeout(() => {
+                    valueDisplay.classList.remove('scale-110', 'text-primary-container');
+                }, 100);
+            });
+        });
+
+        // Home airport (shared with Home screen)
+        (function () {
+          const input = document.getElementById("wallet-origin");
+          const status = document.getElementById("wallet-origin-status");
+          const saveBtn = document.getElementById("wallet-save-origin");
+          if (!input || !MileageAPI) return;
+          const current = MileageAPI.getHomeOrigin();
+          if (current) {
+            input.value = current;
+            status.textContent = "Current home: " + current;
+          }
+          input.addEventListener("input", () => {
+            input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+          });
+          saveBtn.addEventListener("click", () => {
+            try {
+              const code = MileageAPI.setHomeOrigin(input.value);
+              status.textContent = "Saved home airport: " + code;
+            } catch (e) {
+              status.textContent = e.message;
+            }
+          });
+        })();
+    </script>
+</body></html>

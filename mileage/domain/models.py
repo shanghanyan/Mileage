@@ -44,11 +44,61 @@ class VerdictLabel(str, Enum):
     TENTATIVE_BEST = "tentative_best"  # best, but the winner carries a warning flag
 
 
-# Portal floor, cents-per-point, by Capital One product (§7).
+# Portal floor, cents-per-point.
+# Capital One: fixed by product (Venture / Venture X).
+# Other currencies: honest baseline portal rates (not Points Boost peaks).
+# Sources: issuer travel portals / NerdWallet / TPG — Jul 2026.
+# Keyed as "{currency}:{card}" or "{currency}" for a currency-wide floor.
 PORTAL_CPP: dict[str, float] = {
-    "venture": 1.0,
+    # Capital One
+    "capital_one:venture": 1.0,
+    "capital_one:venture_x": 1.25,
+    "venture": 1.0,          # legacy card-only keys
     "venture_x": 1.25,
+    # Chase Travel baseline is 1.0¢ after Points Boost reform (Boost is
+    # variable 1.5–2.0¢ — we use the guaranteed floor, not the peak).
+    "chase_ur": 1.0,
+    "chase_ur:sapphire_preferred": 1.0,
+    "chase_ur:sapphire_reserve": 1.0,
+    # Amex MR: flights via Amex Travel generally ~1.0¢.
+    "amex_mr": 1.0,
+    # Citi Travel: ~1.0¢ for ThankYou.
+    "citi_typ": 1.0,
+    # Bilt Travel portal: 1.25¢ advertised for travel.
+    "bilt": 1.25,
+    # Wells Fargo Rewards travel redemption ~1.0¢.
+    "wells_fargo": 1.0,
+    # Hotel banks have no airline "portal floor" comparable to card travel
+    # portals — omit marriott_bonvoy / hilton so we don't invent one.
 }
+
+# Currencies that have an honest, bookable travel-portal floor.
+PORTAL_CURRENCIES: frozenset[str] = frozenset(
+    {
+        "capital_one",
+        "chase_ur",
+        "amex_mr",
+        "citi_typ",
+        "bilt",
+        "wells_fargo",
+    }
+)
+
+
+def portal_cpp_for(currency: str, card: str = "venture_x") -> Optional[float]:
+    """Return portal CPP if this currency has a real portal floor, else None."""
+    if currency not in PORTAL_CURRENCIES:
+        return None
+    keyed = f"{currency}:{card}"
+    if keyed in PORTAL_CPP:
+        return PORTAL_CPP[keyed]
+    if currency in PORTAL_CPP:
+        return PORTAL_CPP[currency]
+    # Cap One legacy: card name alone.
+    if currency == "capital_one" and card in PORTAL_CPP:
+        return PORTAL_CPP[card]
+    return None
+
 
 
 def utcnow() -> datetime:
@@ -105,12 +155,13 @@ class User:
     user_id: str = "local"
     # currency -> point balance, e.g. {"capital_one": 20000}
     balances: dict[str, int] = field(default_factory=dict)
-    # Capital One product determining the portal floor.
+    # Card product within a currency (Cap One Venture/X; Chase Sapphire, …).
     card: str = "venture_x"
     preferences: dict[str, str] = field(default_factory=dict)
 
-    def portal_cpp(self) -> float:
-        return PORTAL_CPP.get(self.card, PORTAL_CPP["venture"])
+    def portal_cpp(self, currency: str = "capital_one") -> Optional[float]:
+        """Honest portal floor for `currency`, or None if none exists."""
+        return portal_cpp_for(currency, self.card)
 
 
 # --------------------------------------------------------------------------- #
@@ -146,6 +197,10 @@ class AwardQuote:
     route: Route
     miles: int                 # one-way miles in the program's own currency
     seats_available: Optional[int] = None  # None => unknown (chart-only)
+    # Taxes / carrier surcharges still owed in USD cents when booking the award.
+    # None = unknown; 0 = confirmed zero. Charts often omit these — use
+    # knowledge/surcharges.yaml estimates when live tax quotes are missing.
+    taxes_cents: Optional[int] = None
     provenance: Provenance = field(
         default_factory=lambda: Provenance(source_name="unknown")
     )
@@ -198,21 +253,23 @@ class PathOption:
 
     label: str                 # human label, e.g. "Capital One -> Turkish"
     kind: str                  # "portal" | "transfer"
-    cpp: float                 # cents per source point
+    cpp: float                 # cents per source point (net of award taxes)
     source_points: int         # source-currency points required
-    cash_cents: int            # cash value being unlocked
+    cash_cents: int            # cash value being unlocked (gross fare)
     program: Optional[str] = None
     affordable: bool = True    # does the user hold enough points?
     confidence: float = 0.5
     flags: list[str] = field(default_factory=list)
     provenance: list[Provenance] = field(default_factory=list)
+    taxes_cents: int = 0       # award taxes/surcharges still owed
+    currency: Optional[str] = None  # source currency for multi-wallet ranking
 
 
 @dataclass
 class Verdict:
     label: VerdictLabel
     route: Route
-    portal: PathOption
+    portal: Optional[PathOption]
     best_transfer: Optional[PathOption]
     options: list[PathOption]
     rationale: str

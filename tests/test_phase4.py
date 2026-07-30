@@ -184,11 +184,21 @@ def test_api_auth_scopes_balances() -> None:
         app.dependency_overrides[get_orchestrator] = lambda: orchestrator
         client = TestClient(app)
 
-        # Seed two accounts (server-side truth).
-        client.put("/users/alice", json={"card": "venture_x",
-                                          "balances": {DEFAULT_CURRENCY: 30000}})
-        client.put("/users/bob", json={"card": "venture_x",
-                                       "balances": {DEFAULT_CURRENCY: 90000}})
+        # Seed two accounts (server-side truth) — PUT is locked when auth is on.
+        orchestrator.repo.put_user(
+            User(
+                user_id="alice",
+                card="venture_x",
+                balances={DEFAULT_CURRENCY: 30000},
+            )
+        )
+        orchestrator.repo.put_user(
+            User(
+                user_id="bob",
+                card="venture_x",
+                balances={DEFAULT_CURRENCY: 90000},
+            )
+        )
 
         # No token -> 401.
         assert client.post("/redemptions", json={"origin": "LAX", "dest": "IST",

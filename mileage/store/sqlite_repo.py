@@ -121,6 +121,46 @@ class SQLiteRepository:
                 self._conn.execute(
                     f"ALTER TABLE source_health ADD COLUMN {col} {ddl}"
                 )
+        # Saved trip watches (alerts / re-check).
+        self._conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS watches (
+                watch_id            TEXT PRIMARY KEY,
+                user_id             TEXT NOT NULL,
+                origin              TEXT NOT NULL,
+                dest                TEXT NOT NULL,
+                cabin               TEXT NOT NULL DEFAULT 'economy',
+                currencies          TEXT NOT NULL,
+                last_verdict        TEXT,
+                last_best_label     TEXT,
+                last_best_cpp       REAL,
+                last_live_programs  TEXT NOT NULL DEFAULT '[]',
+                last_checked_at     TEXT,
+                created_at          TEXT NOT NULL,
+                active              INTEGER NOT NULL DEFAULT 1,
+                note                TEXT NOT NULL DEFAULT ''
+            )
+            """
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_watches_user ON watches(user_id)"
+        )
+        # Per-user API tokens (hashed). Bearer must match a stored hash when
+        # auth is on — never accept raw user_id as the password.
+        self._conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_tokens (
+                token_hash   TEXT PRIMARY KEY,
+                user_id      TEXT NOT NULL,
+                label        TEXT NOT NULL DEFAULT '',
+                created_at   TEXT NOT NULL,
+                revoked      INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tokens_user ON user_tokens(user_id)"
+        )
 
     # --- shared market data ------------------------------------------------ #
     def put_edge(self, edge: dict[str, Any]) -> None:
@@ -348,6 +388,118 @@ class SQLiteRepository:
             self._conn.execute(
                 "DELETE FROM program_staleness WHERE program = ?",
                 (str(program).strip().lower(),),
+            )
+            self._conn.commit()
+
+    # --- watches + auth tokens --------------------------------------------- #
+    def put_watch(self, watch) -> None:
+        from ..domain.watches import Watch, watch_to_dict
+
+        if not isinstance(watch, Watch):
+            raise TypeError("watch must be a Watch")
+        d = watch_to_dict(watch)
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO watches (
+                    watch_id, user_id, origin, dest, cabin, currencies,
+                    last_verdict, last_best_label, last_best_cpp,
+                    last_live_programs, last_checked_at, created_at, active, note
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(watch_id) DO UPDATE SET
+                    origin=excluded.origin, dest=excluded.dest, cabin=excluded.cabin,
+                    currencies=excluded.currencies, last_verdict=excluded.last_verdict,
+                    last_best_label=excluded.last_best_label,
+                    last_best_cpp=excluded.last_best_cpp,
+                    last_live_programs=excluded.last_live_programs,
+                    last_checked_at=excluded.last_checked_at,
+                    active=excluded.active, note=excluded.note
+                """,
+                (
+                    d["watch_id"],
+                    d["user_id"],
+                    d["origin"],
+                    d["dest"],
+                    d["cabin"],
+                    json.dumps(d["currencies"]),
+                    d["last_verdict"],
+                    d["last_best_label"],
+                    d["last_best_cpp"],
+                    json.dumps(d["last_live_programs"]),
+                    d["last_checked_at"],
+                    d["created_at"],
+                    1 if d["active"] else 0,
+                    d["note"],
+                ),
+            )
+            self._conn.commit()
+
+    def get_watch(self, watch_id: str):
+        from ..domain.watches import watch_from_row
+
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM watches WHERE watch_id = ?", (watch_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        return watch_from_row(dict(row))
+
+    def list_watches(self, user_id: str, *, active_only: bool = True) -> list:
+        from ..domain.watches import watch_from_row
+
+        sql = "SELECT * FROM watches WHERE user_id = ?"
+        args: list[Any] = [user_id]
+        if active_only:
+            sql += " AND active = 1"
+        sql += " ORDER BY created_at DESC"
+        with self._lock:
+            rows = self._conn.execute(sql, args).fetchall()
+        return [watch_from_row(dict(r)) for r in rows]
+
+    def list_all_active_watches(self) -> list:
+        from ..domain.watches import watch_from_row
+
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM watches WHERE active = 1 ORDER BY user_id, created_at"
+            ).fetchall()
+        return [watch_from_row(dict(r)) for r in rows]
+
+    def delete_watch(self, watch_id: str, user_id: str) -> bool:
+        with self._lock:
+            cur = self._conn.execute(
+                "UPDATE watches SET active = 0 WHERE watch_id = ? AND user_id = ?",
+                (watch_id, user_id),
+            )
+            self._conn.commit()
+            return cur.rowcount > 0
+
+    def put_user_token(
+        self, *, token_hash: str, user_id: str, label: str = ""
+    ) -> None:
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO user_tokens (token_hash, user_id, label, created_at, revoked) "
+                "VALUES (?, ?, ?, ?, 0)",
+                (token_hash, user_id, label, _now()),
+            )
+            self._conn.commit()
+
+    def user_id_for_token_hash(self, token_hash: str) -> Optional[str]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT user_id FROM user_tokens "
+                "WHERE token_hash = ? AND revoked = 0",
+                (token_hash,),
+            ).fetchone()
+        return str(row["user_id"]) if row else None
+
+    def revoke_user_tokens(self, user_id: str) -> None:
+        with self._lock:
+            self._conn.execute(
+                "UPDATE user_tokens SET revoked = 1 WHERE user_id = ?",
+                (user_id,),
             )
             self._conn.commit()
 

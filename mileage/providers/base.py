@@ -37,6 +37,11 @@ class Query:
     currency: str = "capital_one"
     # Target programs to consider for AWARD/CHARTS (empty = provider decides).
     programs: list[str] = field(default_factory=list)
+    # Optional travel window for fares / live award search (YYYY-MM-DD).
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    # Soft prefs forwarded to award providers that support them.
+    nonstop_only: bool = False
 
 
 class ProviderHealth(str, Enum):

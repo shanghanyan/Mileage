@@ -67,6 +67,7 @@ class Config:
     # impls are used. Falls back to in-proc if the server is unreachable.
     redis_url: Optional[str] = None
     auth_enabled: bool = False
+    admin_token: Optional[str] = None
     # When True the aggregator never touches the network: only `file://`
     # fixtures resolve (live HTTP + Wayback short-circuit to None). Set via
     # MILEAGE_OFFLINE=1. This is what makes the test suite and `mileage eval`
@@ -139,6 +140,7 @@ class Config:
             or os.getenv("REDIS_URL")
             or None,
             auth_enabled=os.getenv("MILEAGE_AUTH", "") not in ("", "0", "false"),
+            admin_token=os.getenv("MILEAGE_ADMIN_TOKEN") or None,
             offline=os.getenv("MILEAGE_OFFLINE", "") not in ("", "0", "false"),
             gmail_address=os.getenv("GMAIL_ADDRESS") or None,
             gmail_app_password=os.getenv("GMAIL_APP_PASSWORD") or None,
@@ -302,3 +304,40 @@ def partner_programs(
         if block.get("from_currency") == currency:
             return list((block.get("partners") or {}).keys())
     return []
+
+
+def load_alliance_data(
+    config: Config | None = None,
+) -> tuple[dict, list]:
+    """Alliances + program→program transfers from knowledge/alliances.yaml."""
+    from .domain.alliances import load_alliances_yaml
+
+    config = config or Config.from_env()
+    return load_alliances_yaml(config.knowledge_dir / "alliances.yaml")
+
+
+def reachable_award_programs(
+    config: Config | None = None, currency: Optional[str] = None
+) -> list[str]:
+    """Direct transfer partners plus second-hop program_transfer destinations.
+
+    Ensures chart/award fetches include programs only reachable via a loyalty
+    multi-hop (e.g. Marriott → United) when ranking paths.
+    """
+    config = config or Config.from_env()
+    currency = currency or DEFAULT_CURRENCY
+    direct = partner_programs(config, currency)
+    _alliances, transfers = load_alliance_data(config)
+    reachable = set(direct)
+    # Hotel banks are currencies; program_transfers also use those ids as
+    # from_program when an intermediate node appears later.
+    seeds = set(direct) | {currency}
+    changed = True
+    while changed:
+        changed = False
+        for t in transfers:
+            if t.from_program in seeds and t.to_program not in reachable:
+                reachable.add(t.to_program)
+                seeds.add(t.to_program)
+                changed = True
+    return list(reachable)

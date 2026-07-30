@@ -1,18 +1,27 @@
-"""Transfer-bonus multi-path ranking tests."""
+"""Transfer-bonus, alliance labels, and multi-hop ranking tests."""
 
 from __future__ import annotations
 
 import os as _os
 from datetime import date
+from pathlib import Path
 
 _os.environ.setdefault("MILEAGE_OFFLINE", "1")
 
-from mileage.domain.models import Cabin, Layer, Provenance, Route, TransferRatio
-from mileage.graph.build import build_graph
+from mileage.domain.alliances import (
+    Alliance,
+    ProgramTransfer,
+    load_alliances_yaml,
+    program_to_alliance,
+)
+from mileage.domain.models import Cabin, Provenance, Route, TransferRatio
+from mileage.graph.build import SEAT_NODE, build_graph
 from mileage.graph.optimize import rank_paths
 from mileage.providers.base import Query
 from mileage.providers.curated import CuratedProvider, _partner_entries
 from mileage.verify.crosscheck import VerifiedAward
+
+_KNOWLEDGE = Path(__file__).resolve().parents[1] / "mileage" / "knowledge"
 
 
 def test_effective_ratio_property() -> None:
@@ -29,13 +38,13 @@ def test_effective_ratio_property() -> None:
 
 def test_partner_entries_emits_base_and_active_bonus() -> None:
     rows = _partner_entries(
-        "aeroplan",
+        "eva",
         {
-            "ratio": 1.0,
+            "ratio": 0.75,
             "bonus": 1.3,
             "valid_from": "2026-07-01",
-            "valid_until": "2026-12-31",
-            "label": "+30% Aeroplan transfer bonus",
+            "valid_until": "2026-07-31",
+            "label": "+30% EVA transfer bonus",
         },
         today=date(2026, 7, 20),
     )
@@ -47,9 +56,9 @@ def test_partner_entries_emits_base_and_active_bonus() -> None:
 
 def test_partner_entries_skips_expired_bonus() -> None:
     rows = _partner_entries(
-        "aeroplan",
+        "eva",
         {
-            "ratio": 1.0,
+            "ratio": 0.75,
             "bonus": 1.3,
             "valid_until": "2026-06-01",
         },
@@ -59,20 +68,26 @@ def test_partner_entries_skips_expired_bonus() -> None:
     assert rows[0][1] == 1.0
 
 
-def test_curated_loads_aeroplan_bonus_when_in_window() -> None:
+def test_curated_loads_eva_bonus_from_calendar() -> None:
+    """EVA +30% comes from scraped bonus_calendar.yaml, not ratios.yaml."""
+    from mileage.domain.models import Layer
+
     provider = CuratedProvider(as_of=date(2026, 7, 20))
     ratios = [
         q
-        for q in provider.fetch(Query(Route("LAX", "IST", Cabin.BUSINESS), Layer.CHARTS))
-        if isinstance(q, TransferRatio) and q.to_program == "aeroplan"
+        for q in provider.fetch(Query(Route("LAX", "TPE", Cabin.BUSINESS), Layer.CHARTS))
+        if isinstance(q, TransferRatio) and q.to_program == "eva"
     ]
-    assert len(ratios) == 2
     assert any(r.is_bonus for r in ratios)
     assert any(not r.is_bonus for r in ratios)
+    bonus = next(r for r in ratios if r.is_bonus)
+    assert "live_bonus_calendar" in bonus.flags
 
 
-def test_curated_skips_aeroplan_bonus_outside_window() -> None:
-    provider = CuratedProvider(as_of=date(2027, 1, 15))
+def test_curated_no_aeroplan_demo_bonus() -> None:
+    from mileage.domain.models import Layer
+
+    provider = CuratedProvider(as_of=date(2026, 7, 20))
     ratios = [
         q
         for q in provider.fetch(Query(Route("LAX", "IST", Cabin.BUSINESS), Layer.CHARTS))
@@ -80,6 +95,19 @@ def test_curated_skips_aeroplan_bonus_outside_window() -> None:
     ]
     assert len(ratios) == 1
     assert ratios[0].bonus_multiplier == 1.0
+    assert not ratios[0].is_bonus
+
+
+def test_curated_skips_eva_bonus_outside_window() -> None:
+    from mileage.domain.models import Layer
+
+    provider = CuratedProvider(as_of=date(2026, 8, 15))
+    ratios = [
+        q
+        for q in provider.fetch(Query(Route("LAX", "TPE", Cabin.BUSINESS), Layer.CHARTS))
+        if isinstance(q, TransferRatio) and q.to_program == "eva"
+    ]
+    assert all(not r.is_bonus for r in ratios)
 
 
 def test_bonus_path_beats_base_path() -> None:
@@ -121,14 +149,79 @@ def test_bonus_path_beats_base_path() -> None:
     assert bonus.cpp == max(o.cpp for o in transfer)
 
 
+def test_alliance_label_on_star_alliance_path() -> None:
+    currency = "capital_one"
+    alliances = {
+        "star_alliance": Alliance(
+            id="star_alliance",
+            name="Star Alliance",
+            programs=frozenset({"aeroplan", "united", "turkish"}),
+        )
+    }
+    ratios = [
+        TransferRatio(from_currency=currency, to_program="aeroplan", ratio=1.0),
+    ]
+    awards = [
+        VerifiedAward(
+            program="aeroplan",
+            route=Route("LAX", "IST", Cabin.BUSINESS),
+            miles=60000,
+            confidence=0.9,
+            flags=[],
+            provenance=[Provenance(source_name="test")],
+        )
+    ]
+    graph = build_graph(currency, ratios, awards, alliances=alliances)
+    options = rank_paths(graph, currency, 450000, portal_cpp=1.25, balance=200000)
+    transfer = next(o for o in options if o.kind == "transfer")
+    assert "Star Alliance" in transfer.label
+    assert any(f.startswith("alliance:") for f in transfer.flags)
+
+
+def test_program_transfer_multi_hop_beats_when_cheaper_award() -> None:
+    """Currency → A → B → SEAT when B's award is cheaper after the hop."""
+    currency = "capital_one"
+    ratios = [
+        TransferRatio(from_currency=currency, to_program="aeroplan", ratio=1.0),
+    ]
+    transfers = [
+        ProgramTransfer(from_program="aeroplan", to_program="turkish", ratio=1.0),
+    ]
+    awards = [
+        VerifiedAward(
+            program="aeroplan",
+            route=Route("LAX", "IST", Cabin.BUSINESS),
+            miles=90000,
+            confidence=0.9,
+            flags=[],
+            provenance=[Provenance(source_name="test")],
+        ),
+        VerifiedAward(
+            program="turkish",
+            route=Route("LAX", "IST", Cabin.BUSINESS),
+            miles=45000,
+            confidence=0.9,
+            flags=[],
+            provenance=[Provenance(source_name="test")],
+        ),
+    ]
+    graph = build_graph(
+        currency, ratios, awards, program_transfers=transfers
+    )
+    options = rank_paths(graph, currency, 450000, portal_cpp=1.25, balance=200000)
+    multi = [o for o in options if o.kind == "transfer" and "multi_hop" in o.flags]
+    assert len(multi) == 1
+    assert multi[0].program == "turkish"
+    assert multi[0].source_points == 45000
+    assert "program_transfer" in multi[0].flags
+
+
 def test_multi_hop_flag_when_two_transfer_hops() -> None:
     """Program→program edge compounds; path gets multi_hop flag."""
     currency = "capital_one"
     ratios = [
         TransferRatio(from_currency=currency, to_program="aeroplan", ratio=1.0),
     ]
-    # Manually build a 2-hop: C1 → aeroplan → turkish → SEAT
-    from mileage.graph.build import SEAT_NODE
     import networkx as nx
 
     g = nx.MultiDiGraph()
@@ -136,7 +229,9 @@ def test_multi_hop_flag_when_two_transfer_hops() -> None:
     g.add_node("aeroplan", kind="program")
     g.add_node("turkish", kind="program")
     g.add_node(SEAT_NODE, kind="seat")
-    g.add_edge(currency, "aeroplan", key="base", ratio=1.0, confidence=1.0, flags=[], provenance=None)
+    g.add_edge(
+        currency, "aeroplan", key="base", ratio=1.0, confidence=1.0, flags=[], provenance=None
+    )
     g.add_edge(
         "aeroplan",
         "turkish",
@@ -160,3 +255,14 @@ def test_multi_hop_flag_when_two_transfer_hops() -> None:
     multi = [o for o in options if o.kind == "transfer" and "multi_hop" in o.flags]
     assert len(multi) == 1
     assert "Aeroplan" in multi[0].label and "Turkish" in multi[0].label
+
+
+def test_load_alliances_yaml() -> None:
+    alliances, transfers = load_alliances_yaml(_KNOWLEDGE / "alliances.yaml")
+    assert "star_alliance" in alliances
+    assert "aeroplan" in alliances["star_alliance"].programs
+    assert "united" in alliances["star_alliance"].programs
+    assert any(t.from_program == "marriott_bonvoy" for t in transfers)
+    mapping = program_to_alliance(alliances)
+    assert mapping["aeroplan"].id == "star_alliance"
+    assert mapping["delta"].id == "skyteam"

@@ -15,3 +15,19 @@ fares:
   SFO-NRT-business: 380000     # ~$3,800 one-way transpacific business
   NRT-SFO-business: 380000
   LAX-LHR-business: 350000
+  # California short-haul / Bay ↔ SoCal (offline demos without Amadeus)
+  SJC-LAX-economy: 8900        # ~$89 one-way
+  LAX-SJC-economy: 8900
+  SFO-LAX-economy: 9900
+  LAX-SFO-economy: 9900
+  OAK-LAX-economy: 8500
+  LAX-OAK-economy: 8500
+  SAN-SFO-economy: 11000
+  SFO-SAN-economy: 11000
+  SJC-SAN-economy: 9500
+  SAN-SJC-economy: 9500
+  # Extra demos
+  SFO-JFK-economy: 17500
+  JFK-SFO-economy: 17500
+  SEA-LAX-economy: 12000
+  LAX-SEA-economy: 12000

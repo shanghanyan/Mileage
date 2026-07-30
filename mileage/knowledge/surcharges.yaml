@@ -1,0 +1,77 @@
+# Typical carrier surcharges / taxes still owed on award tickets (USD cents).
+# Used to discount award CPP so Avios/BA-style awards don't look better than
+# they feel. Values are conservative one-way averages for long-haul; live tax
+# quotes should replace these when available. Flag: estimated_surcharge.
+#
+# CPP math: net_value_cents = max(0, cash_cents - taxes_cents)
+#           cpp = net_value_cents / source_points
+
+defaults:
+  # Most Star Alliance / US major awards: government taxes only.
+  taxes_cents: 5000          # ~$50
+  confidence: 0.4
+
+programs:
+  # BA Avios / Iberia often pass through heavy carrier YQ on BA/IB metal.
+  avios:
+    taxes_cents: 45000       # ~$450 long-haul BA metal (conservative)
+    note: "BA/IB carrier surcharges dominate; partner-metal AA awards are cheaper"
+    confidence: 0.55
+  qatar:
+    taxes_cents: 12000
+    confidence: 0.45
+  qantas:
+    taxes_cents: 15000
+    confidence: 0.45
+  virgin_atlantic:
+    taxes_cents: 35000       # VS often has high UK APD + fuel on own metal
+    confidence: 0.5
+  flying_blue:
+    taxes_cents: 18000
+    confidence: 0.45
+  emirates:
+    taxes_cents: 12000
+    confidence: 0.45
+  cathay_pacific:
+    taxes_cents: 10000
+    confidence: 0.4
+  # Low-surcharge programs (LifeMiles / Aeroplan / Turkish partner awards)
+  lifemiles:
+    taxes_cents: 4000
+    confidence: 0.5
+  aeroplan:
+    taxes_cents: 6000
+    confidence: 0.5
+  turkish:
+    taxes_cents: 5000
+    confidence: 0.5
+  united:
+    taxes_cents: 5500
+    confidence: 0.45
+  delta:
+    taxes_cents: 5500
+    confidence: 0.4
+  american:
+    taxes_cents: 5500
+    confidence: 0.4
+  alaska:
+    taxes_cents: 4500
+    confidence: 0.45
+  ana:
+    taxes_cents: 8000
+    confidence: 0.45
+  krisflyer:
+    taxes_cents: 7000
+    confidence: 0.4
+  eva:
+    taxes_cents: 7000
+    confidence: 0.4
+  etihad:
+    taxes_cents: 10000
+    confidence: 0.4
+  finnair:
+    taxes_cents: 20000
+    confidence: 0.4
+  jetblue:
+    taxes_cents: 3500
+    confidence: 0.4

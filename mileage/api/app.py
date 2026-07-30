@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .. import obs
@@ -28,7 +28,13 @@ from ..providers.aggregator.live_scrape import (
 )
 from ..providers.aggregator.path_inventory import build_path_inventory
 from ..providers.aggregator.scrape_store import load_daily_snapshot
-from .auth import make_current_user_dependency
+from .auth import (
+    hash_token,
+    make_current_user_dependency,
+    mint_token,
+    require_self_or_admin,
+    _extract_token,
+)
 from .orchestrator import RunOrchestrator, request_to_route, request_to_user
 from .schemas import (
     FreshnessProvider,
@@ -43,6 +49,9 @@ from .schemas import (
     RunStatusResponse,
     UpsertUserRequest,
     UserProfile,
+    WatchCreateRequest,
+    WatchResponse,
+    TokenResponse,
 )
 
 app = FastAPI(
@@ -125,7 +134,16 @@ def create_redemption(
             )
         acting = request_to_user(req)
         acting.user_id = user.user_id
-    record = orchestrator.start(route, acting, req.currency)
+    if req.preferences:
+        acting.preferences.update(req.preferences)
+    record = orchestrator.start(
+        route,
+        acting,
+        req.currency,
+        currencies=list(req.currencies) or None,
+        start_date=req.start_date,
+        end_date=req.end_date,
+    )
     return RedemptionResponse(
         run_id=record.run_id,
         status=record.status,
@@ -189,22 +207,107 @@ def get_me(user: User = Depends(current_user)) -> UserProfile:
 def upsert_user(
     user_id: str,
     req: UpsertUserRequest,
+    authorization: Optional[str] = Header(default=None),
+    config: Config = Depends(get_config),
     orchestrator: RunOrchestrator = Depends(get_orchestrator),
+    user: User = Depends(current_user),
 ) -> UserProfile:
-    """Seed/update a user's balances + card (the only user-scoped data, §9)."""
-    user = User(
+    """Update a user's balances + card. Locked to self when auth is on."""
+    token = _extract_token(authorization)
+    if config.auth_enabled:
+        require_self_or_admin(
+            acting=user,
+            target_user_id=user_id,
+            admin_token=config.admin_token,
+            request_token=token,
+        )
+    target = User(
         user_id=user_id,
         card=req.card,
         balances=dict(req.balances),
         preferences=dict(req.preferences),
     )
-    orchestrator.repo.put_user(user)
+    orchestrator.repo.put_user(target)
     return UserProfile(
-        user_id=user.user_id,
-        card=user.card,
-        balances=user.balances,
-        preferences=user.preferences,
+        user_id=target.user_id,
+        card=target.card,
+        balances=target.balances,
+        preferences=target.preferences,
     )
+
+
+@app.post("/users/{user_id}/tokens", response_model=TokenResponse)
+def create_user_token(
+    user_id: str,
+    authorization: Optional[str] = Header(default=None),
+    config: Config = Depends(get_config),
+    orchestrator: RunOrchestrator = Depends(get_orchestrator),
+    user: User = Depends(current_user),
+) -> TokenResponse:
+    """Mint a bearer API token for `user_id`. Shown once — store it."""
+    token = _extract_token(authorization)
+    if config.auth_enabled:
+        require_self_or_admin(
+            acting=user,
+            target_user_id=user_id,
+            admin_token=config.admin_token,
+            request_token=token,
+        )
+    if orchestrator.repo.get_user(user_id) is None:
+        orchestrator.repo.put_user(User(user_id=user_id))
+    raw = mint_token()
+    orchestrator.repo.put_user_token(
+        token_hash=hash_token(raw), user_id=user_id, label="api"
+    )
+    return TokenResponse(user_id=user_id, token=raw)
+
+
+@app.post("/watches", response_model=WatchResponse)
+def create_watch(
+    req: WatchCreateRequest,
+    orchestrator: RunOrchestrator = Depends(get_orchestrator),
+    user: User = Depends(current_user),
+) -> WatchResponse:
+    import uuid
+
+    from ..domain.watches import Watch, watch_to_dict
+
+    watch = Watch(
+        watch_id=uuid.uuid4().hex,
+        user_id=user.user_id,
+        origin=req.origin.upper(),
+        dest=req.dest.upper(),
+        cabin=req.cabin,
+        currencies=list(req.currencies) or ["capital_one"],
+        note=req.note or "",
+    )
+    orchestrator.repo.put_watch(watch)
+    return WatchResponse(**watch_to_dict(watch))
+
+
+@app.get("/watches", response_model=list[WatchResponse])
+def list_watches(
+    orchestrator: RunOrchestrator = Depends(get_orchestrator),
+    user: User = Depends(current_user),
+) -> list[WatchResponse]:
+    from ..domain.watches import watch_to_dict
+
+    return [
+        WatchResponse(**watch_to_dict(w))
+        for w in orchestrator.repo.list_watches(user.user_id)
+    ]
+
+
+@app.delete("/watches/{watch_id}")
+def delete_watch(
+    watch_id: str,
+    orchestrator: RunOrchestrator = Depends(get_orchestrator),
+    user: User = Depends(current_user),
+) -> dict:
+    ok = orchestrator.repo.delete_watch(watch_id, user.user_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="watch not found")
+    return {"deleted": True, "watch_id": watch_id}
 
 
 @app.get("/scrape/inventory", response_model=ScrapeInventoryResponse)

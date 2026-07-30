@@ -78,6 +78,9 @@ mileage = "mileage.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = [
+    "beta_daily: live beta route sweep (Redis wipe + JSONL log); run with -m beta_daily",
+]
 # tests/conftest.py pins MILEAGE_OFFLINE=1 so the suite stays hermetic.
 
 [tool.setuptools]

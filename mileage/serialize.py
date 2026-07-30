@@ -45,6 +45,8 @@ def quote_result_to_dict(result: dict) -> dict:
             "affordable": o.affordable,
             "confidence": o.confidence,
             "flags": o.flags,
+            "taxes_cents": o.taxes_cents,
+            "currency": o.currency,
         }
         for o in verdict.options
     ]
@@ -54,6 +56,11 @@ def quote_result_to_dict(result: dict) -> dict:
             "cpp": round(verdict.best_transfer.cpp, 2),
             "source_points": verdict.best_transfer.source_points,
             "flags": verdict.best_transfer.flags,
+            "taxes_cents": verdict.best_transfer.taxes_cents,
+            "currency": verdict.best_transfer.currency,
         }
-    out["portal_cpp"] = round(verdict.portal.cpp, 2)
+    if verdict.portal is not None:
+        out["portal_cpp"] = round(verdict.portal.cpp, 2)
+    else:
+        out["portal_cpp"] = None
     return out

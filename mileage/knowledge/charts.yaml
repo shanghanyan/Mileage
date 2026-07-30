@@ -15,6 +15,13 @@ region_map:
   LAX: north_america
   JFK: north_america
   SFO: north_america
+  SJC: north_america
+  OAK: north_america
+  SAN: north_america
+  PDX: north_america
+  SMF: north_america
+  SNA: north_america
+  BUR: north_america
   ORD: north_america
   EWR: north_america
   IAD: north_america
@@ -133,6 +140,11 @@ program_zones:
     AMS: 11
     LAX: 12
     SFO: 12
+    SJC: 12
+    OAK: 12
+    SAN: 12
+    PDX: 12
+    SEA: 12
     YVR: 12
     JFK: 13
     EWR: 13
@@ -192,6 +204,13 @@ program_zones:
     LAX: 10
     JFK: 10
     SFO: 10
+    SJC: 10
+    OAK: 10
+    SAN: 10
+    PDX: 10
+    SMF: 10
+    SNA: 10
+    BUR: 10
     ORD: 10
     EWR: 10
     IAD: 10
@@ -227,6 +246,13 @@ airports:
   LAX: [33.94, -118.41]
   JFK: [40.64, -73.78]
   SFO: [37.62, -122.38]
+  SJC: [37.36, -121.93]
+  OAK: [37.72, -122.22]
+  SAN: [32.73, -117.19]
+  PDX: [45.59, -122.60]
+  SMF: [38.70, -121.59]
+  SNA: [33.68, -117.87]
+  BUR: [34.20, -118.36]
   ORD: [41.98, -87.90]
   EWR: [40.69, -74.17]
   IAD: [38.95, -77.46]
@@ -374,3 +400,305 @@ programs:
         miles:
           economy: 60000
           business: 75000
+      - regions: [north_america, europe]
+        roundtrip: true
+        miles:
+          economy: 88000
+          business: 120000
+
+  united:
+    name: United MileagePlus
+    alliance: star_alliance
+    trust: 0.65
+    source: "United MileagePlus partner award chart (curated bands)"
+    url: https://www.united.com/ual/en/us/fly/mileageplus.html
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 12500
+          business: 25000
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 30000
+          business: 70000
+
+  delta:
+    name: Delta SkyMiles
+    alliance: skyteam
+    trust: 0.6
+    source: "Delta SkyMiles award pricing (dynamic; curated floor bands)"
+    url: https://www.delta.com/skymiles
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 15000
+          business: 40000
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          business: 90000
+
+  american:
+    name: American AAdvantage
+    alliance: oneworld
+    trust: 0.6
+    source: "American AAdvantage award chart (curated bands)"
+    url: https://www.aa.com/aadvantage
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 12500
+          business: 30000
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 27500
+          business: 57500
+
+  iberia:
+    name: Iberia Plus (Avios)
+    alliance: oneworld
+    trust: 0.55
+    source: "Iberia Plus / Avios award chart (curated bands)"
+    url: https://www.iberia.com/us/iberia-plus/
+    updated_at: "2026-07-28"
+    bands:
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 17000
+          business: 34000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 20000
+          business: 40000
+
+  alaska:
+    name: Alaska Mileage Plan
+    alliance: oneworld
+    trust: 0.65
+    source: "Alaska Mileage Plan partner award chart"
+    url: https://www.alaskaair.com/content/mileage-plan
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 7500
+          business: 15000
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 22500
+          business: 42500
+
+  jetblue:
+    name: JetBlue TrueBlue
+    alliance: independent
+    trust: 0.55
+    source: "JetBlue TrueBlue (dynamic; curated reference bands)"
+    url: https://www.jetblue.com/trueblue
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 10000
+          business: 25000
+
+  finnair:
+    name: Finnair Plus
+    alliance: oneworld
+    trust: 0.6
+    source: "Finnair Plus award chart (Avios-adjacent; curated bands)"
+    url: https://www.finnair.com/finnair-plus
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 22500
+          business: 45000
+
+  flying_blue:
+    name: Flying Blue (Air France / KLM)
+    alliance: skyteam
+    trust: 0.65
+    source: "Flying Blue Award Explorer (curated sweet-spot bands)"
+    url: https://www.flyingblue.com/
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 25000
+          business: 61000
+      # Intra-NA via SkyTeam partners is rarely a Cap One sweet spot; keep
+      # conservative so Demo A (LAX–JFK) stays an honest portal-floor case.
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 25000
+          business: 50000
+
+  virgin_atlantic:
+    name: Virgin Atlantic Flying Club
+    alliance: skyteam
+    trust: 0.65
+    source: "Virgin Atlantic Flying Club award chart"
+    url: https://www.virginatlantic.com/flying-club
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 10000
+          business: 47000
+
+  avios:
+    name: British Airways Avios
+    alliance: oneworld
+    trust: 0.65
+    source: "BA Avios reward flight calculator (distance; curated bands)"
+    url: https://www.britishairways.com/en-us/executive-club
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 26000
+          business: 80000
+      # Distance-based AA partner awards can be cheaper; curated floor stays
+      # conservative pending live distance calc (avoids inventing Demo A wins).
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 20000
+          business: 40000
+
+  cathay_pacific:
+    name: Cathay Asia Miles
+    alliance: oneworld
+    trust: 0.6
+    source: "Cathay Asia Miles award chart"
+    url: https://www.cathaypacific.com/cx/en_US/membership/asia-miles.html
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          business: 70000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          business: 80000
+
+  emirates:
+    name: Emirates Skywards
+    alliance: independent
+    trust: 0.6
+    source: "Emirates Skywards reward chart"
+    url: https://www.emirates.com/skywards/
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, middle_east]
+        roundtrip: false
+        miles:
+          economy: 35000
+          business: 87500
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 37500
+          business: 87500
+
+  etihad:
+    name: Etihad Guest
+    alliance: independent
+    trust: 0.55
+    source: "Etihad Guest award chart"
+    url: https://www.etihadguest.com/
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, middle_east]
+        roundtrip: false
+        miles:
+          economy: 40000
+          business: 80000
+
+  qantas:
+    name: Qantas Frequent Flyer
+    alliance: oneworld
+    trust: 0.6
+    source: "Qantas Frequent Flyer classic award chart"
+    url: https://www.qantas.com/fflyer
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 27800
+          business: 63000
+
+  qatar:
+    name: Qatar Privilege Club
+    alliance: oneworld
+    trust: 0.6
+    source: "Qatar Privilege Club award chart"
+    url: https://www.qatarairways.com/privilegeclub
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, middle_east]
+        roundtrip: false
+        miles:
+          economy: 35000
+          business: 75000
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          business: 70000
+
+  krisflyer:
+    name: Singapore KrisFlyer
+    alliance: star_alliance
+    trust: 0.65
+    source: "KrisFlyer Star Alliance award chart (curated bands)"
+    url: https://www.singaporeair.com/krisflyer
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 41000
+          business: 92000
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 38000
+          business: 84000
+
+  eva:
+    name: EVA Infinity MileageLands
+    alliance: star_alliance
+    trust: 0.6
+    source: "EVA Infinity MileageLands award chart"
+    url: https://www.evaair.com/
+    updated_at: "2026-07-01"
+    bands:
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          business: 65000

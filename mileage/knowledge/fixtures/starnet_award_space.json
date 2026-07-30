@@ -6,6 +6,10 @@
     {"program": "turkish",   "origin": "LAX", "dest": "IST", "cabin": "economy",  "miles": 22500, "seats": 6, "roundtrip": false, "updated_at": "2026-06-24"},
     {"program": "lifemiles", "origin": "LAX", "dest": "JFK", "cabin": "economy",  "miles": 12500, "seats": 4, "roundtrip": false, "updated_at": "2026-06-23"},
     {"program": "aeroplan",  "origin": "LAX", "dest": "JFK", "cabin": "economy",  "miles": 17300, "seats": 9, "roundtrip": false, "updated_at": "2026-06-23"},
-    {"program": "united",    "origin": "LAX", "dest": "JFK", "cabin": "economy",  "miles": 11000, "seats": 7, "roundtrip": false, "updated_at": "2026-06-24"}
+    {"program": "united",    "origin": "LAX", "dest": "JFK", "cabin": "economy",  "miles": 11000, "seats": 7, "roundtrip": false, "updated_at": "2026-06-24"},
+    {"program": "aeroplan",  "origin": "SJC", "dest": "LAX", "cabin": "economy",  "miles": 7500,  "seats": 5, "roundtrip": false, "updated_at": "2026-07-28"},
+    {"program": "lifemiles", "origin": "SJC", "dest": "LAX", "cabin": "economy",  "miles": 8000,  "seats": 4, "roundtrip": false, "updated_at": "2026-07-28"},
+    {"program": "alaska",    "origin": "SJC", "dest": "LAX", "cabin": "economy",  "miles": 7500,  "seats": 6, "roundtrip": false, "updated_at": "2026-07-28"},
+    {"program": "american",  "origin": "SJC", "dest": "LAX", "cabin": "economy",  "miles": 7500,  "seats": 3, "roundtrip": false, "updated_at": "2026-07-28"}
   ]
 }

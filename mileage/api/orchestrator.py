@@ -64,6 +64,9 @@ class RunOrchestrator:
         user: User,
         currency: str,
         *,
+        currencies: Optional[list[str]] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         on_complete: Optional[Callable[[RunRecord], None]] = None,
     ) -> RunRecord:
         run_id = uuid.uuid4().hex
@@ -73,7 +76,16 @@ class RunOrchestrator:
 
         thread = threading.Thread(
             target=self._execute,
-            args=(run_id, route, user, currency, on_complete),
+            args=(
+                run_id,
+                route,
+                user,
+                currency,
+                currencies,
+                start_date,
+                end_date,
+                on_complete,
+            ),
             daemon=True,
         )
         thread.start()
@@ -96,6 +108,9 @@ class RunOrchestrator:
         route: Route,
         user: User,
         currency: str,
+        currencies: Optional[list[str]],
+        start_date: Optional[str],
+        end_date: Optional[str],
         on_complete: Optional[Callable[[RunRecord], None]],
     ) -> None:
         try:
@@ -112,6 +127,9 @@ class RunOrchestrator:
                 repo=self._repo,
                 config=self.config,
                 on_step=on_step,
+                currencies=currencies,
+                start_date=start_date,
+                end_date=end_date,
             )
             payload = quote_result_to_dict(raw)
             with self._lock:
@@ -146,4 +164,12 @@ def request_to_route(req) -> Route:
 
 
 def request_to_user(req) -> User:
-    return User(balances={req.currency: req.miles}, card=req.card)
+    balances = {req.currency: req.miles or 0}
+    for cur in getattr(req, "currencies", None) or []:
+        balances.setdefault(cur, req.miles or 0)
+    prefs = dict(getattr(req, "preferences", None) or {})
+    return User(
+        balances=balances,
+        card=req.card,
+        preferences=prefs,
+    )

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mileage — Stitch prototype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f8faf8;
+      --ink: #191c1b;
+      --primary: #47614e;
+      --card: rgba(255,255,255,0.85);
+      --line: #c2c8c1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: radial-gradient(circle at top right, #e7e9e7 0%, #f8faf8 60%);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 24px 20px 48px;
+    }
+    h1 { font-size: 28px; margin: 0 0 8px; color: var(--primary); }
+    p { margin: 0 0 20px; color: #424843; line-height: 1.45; }
+    .note {
+      font-size: 13px;
+      background: #ccead1;
+      color: #334c3a;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .grid { display: grid; gap: 12px; max-width: 420px; }
+    a.card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(95,122,102,0.08);
+    }
+    a.card strong { display: block; color: var(--primary); margin-bottom: 4px; }
+    a.card span { font-size: 13px; color: #737972; }
+    .back { display: inline-block; margin-top: 24px; color: var(--primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Mileage Stitch</h1>
+  <p>Phone-first HTML prototype. Edit files under <code>stitch_mileage/</code> and refresh — this hub serves them live.</p>
+  <div class="note">
+    Stitch is editable HTML under <code>stitch_mileage/</code>. Run Search talks to FastAPI when uvicorn is up. Save = snapshot; Wishlist = monitor (local for now).
+  </div>
+  <div class="grid">
+    <a class="card" href="/stitch/0._intro_ritual/code.html">
+      <strong>0 · Intro ritual</strong>
+      <span>Try beta → Home</span>
+    </a>
+    <a class="card" href="/stitch/1._quick_search/code.html">
+      <strong>1 · Quick search (Home)</strong>
+      <span>Where + when → live Run Search</span>
+    </a>
+    <a class="card" href="/stitch/3._verdict_screen/code.html">
+      <strong>3 · Verdict</strong>
+      <span>Save (no monitor) or Wishlist (keep checking)</span>
+    </a>
+    <a class="card" href="/stitch/2._trips_saved/code.html">
+      <strong>2 · Saved</strong>
+      <span>Snapshots only</span>
+    </a>
+    <a class="card" href="/stitch/5._wishlist/code.html">
+      <strong>5 · Wishlist</strong>
+      <span>Monitored routes</span>
+    </a>
+    <a class="card" href="/stitch/4._wallet_settings/code.html">
+      <strong>4 · Wallet &amp; settings</strong>
+      <span>Prefs + balances (gaps marked with i)</span>
+    </a>
+  </div>
+  <a class="back" href="/">← React optimizer (API-backed)</a>
+</body>
+</html>

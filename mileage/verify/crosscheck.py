@@ -38,6 +38,7 @@ class VerifiedAward:
     miles: int
     confidence: float
     seats_available: Optional[int] = None  # set once live space verifies it
+    taxes_cents: Optional[int] = None
     flags: list[str] = field(default_factory=list)
     provenance: list[Provenance] = field(default_factory=list)
 
@@ -91,6 +92,8 @@ def verify_award_quotes(
 
         seats = [q.seats_available for q in group if q.seats_available is not None]
         seats_available = max(seats) if seats else None
+        tax_vals = [q.taxes_cents for q in group if q.taxes_cents is not None]
+        taxes_cents = int(round(sum(tax_vals) / len(tax_vals))) if tax_vals else None
 
         n_independent = _independent_sources(group)
         if n_independent >= 2:
@@ -114,6 +117,7 @@ def verify_award_quotes(
                 miles=miles,
                 confidence=round(confidence, 3),
                 seats_available=seats_available,
+                taxes_cents=taxes_cents,
                 flags=sorted(flags),
                 provenance=[q.provenance for q in group],
             )

@@ -16,10 +16,16 @@ class RedemptionRequest(BaseModel):
     dest: str = Field(..., min_length=3, max_length=3, examples=["IST"])
     cabin: Literal["economy", "premium_economy", "business", "first"] = "economy"
     currency: str = "capital_one"
+    # Optional multi-wallet ranking (e.g. ["capital_one", "chase_ur"]).
+    currencies: list[str] = Field(default_factory=list)
     # Optional when authenticated: balances come from the user's account, not
     # the request body. Required for anonymous/single-user requests.
     miles: Optional[int] = Field(default=None, ge=0, examples=[90000])
     card: Literal["venture", "venture_x"] = "venture_x"
+    travel_window: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    preferences: dict[str, str] = Field(default_factory=dict)
 
 
 class RedemptionResponse(BaseModel):
@@ -40,6 +46,36 @@ class UpsertUserRequest(BaseModel):
     card: Literal["venture", "venture_x"] = "venture_x"
     balances: dict[str, int] = Field(default_factory=dict)
     preferences: dict[str, str] = Field(default_factory=dict)
+
+
+class WatchCreateRequest(BaseModel):
+    origin: str = Field(..., min_length=3, max_length=3)
+    dest: str = Field(..., min_length=3, max_length=3)
+    cabin: Literal["economy", "premium_economy", "business", "first"] = "economy"
+    currencies: list[str] = Field(default_factory=lambda: ["capital_one"])
+    note: str = ""
+
+
+class WatchResponse(BaseModel):
+    watch_id: str
+    user_id: str
+    origin: str
+    dest: str
+    cabin: str
+    currencies: list[str] = Field(default_factory=list)
+    last_verdict: Optional[str] = None
+    last_best_label: Optional[str] = None
+    last_best_cpp: Optional[float] = None
+    last_live_programs: list[str] = Field(default_factory=list)
+    last_checked_at: Optional[str] = None
+    created_at: str = ""
+    active: bool = True
+    note: str = ""
+
+
+class TokenResponse(BaseModel):
+    user_id: str
+    token: str
 
 
 class RunStatusResponse(BaseModel):

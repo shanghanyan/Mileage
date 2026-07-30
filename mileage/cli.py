@@ -23,8 +23,9 @@ from .config import (
     DEFAULT_CURRENCY,
     build_registry,
     build_repository,
+    load_alliance_data,
     load_federation,
-    partner_programs,
+    reachable_award_programs,
 )
 from .domain.models import (
     AwardQuote,
@@ -63,15 +64,50 @@ def run_quote(
     repo: Optional[Repository] = None,
     config: Optional[Config] = None,
     on_step: Optional[Callable[[PipelineStep], None]] = None,
+    currencies: Optional[list[str]] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
 ) -> dict:
+    """Run a quote for one primary currency, optionally ranking a multi-wallet.
+
+    When ``currencies`` is set (or the user holds multiple balances and the
+    primary is ``"all"``), every held transferable currency is ranked and
+    merged so we can answer "Cap One vs Chase — which wins?".
+    """
     config = config or Config.from_env()
-    balance = user.balances.get(currency, 0)
+
+    if currencies is None:
+        if currency == "all":
+            currencies = [c for c, bal in user.balances.items() if bal > 0] or [
+                "capital_one"
+            ]
+        else:
+            currencies = [currency]
+    # Dedupe, keep order; ensure primary first.
+    seen: set[str] = set()
+    wallet: list[str] = []
+    for c in [currency, *currencies] if currency != "all" else currencies:
+        if c == "all":
+            continue
+        if c not in seen:
+            seen.add(c)
+            wallet.append(c)
+    if not wallet:
+        wallet = ["capital_one"]
+    primary = wallet[0]
+    balance = user.balances.get(primary, 0)
+    nonstop = str(user.preferences.get("nonstop_only", "")).lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
     chain_cm = obs.span(
         "quote",
         obs.KIND_CHAIN,
         input_value=(
-            f"{route.key()} · {currency} · {balance:,} pts · {user.card} "
+            f"{route.key()} · {','.join(wallet)} · {balance:,} pts · {user.card} "
             f"(user={user.user_id})"
         ),
     )
@@ -83,38 +119,71 @@ def run_quote(
         if on_step:
             on_step("gathering")
 
-        # L2 cash fare — the price-to-beat.
+        # L2 cash fare — the price-to-beat (shared across wallet currencies).
         with obs.span("gather:fares", obs.KIND_CHAIN, input_value=route.key()) as s:
             fare_quotes = [
                 q
-                for q in registry.fetch(Query(route, Layer.FARES, currency))
+                for q in registry.fetch(
+                    Query(
+                        route,
+                        Layer.FARES,
+                        primary,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
+                )
                 if isinstance(q, FareQuote)
             ]
             obs.set_output(s, f"{len(fare_quotes)} fare quote(s)")
 
-        programs = partner_programs(config, currency)
-
-        # L4 ratios + chart-derived award costs.
-        with obs.span("gather:charts", obs.KIND_CHAIN, input_value=route.key()) as s:
-            chart_quotes = registry.fetch(
-                Query(route, Layer.CHARTS, currency, programs=programs)
-            )
-            obs.set_output(s, f"{len(chart_quotes)} chart quote(s)")
-        ratios = [q for q in chart_quotes if isinstance(q, TransferRatio)]
-        award_quotes = [q for q in chart_quotes if isinstance(q, AwardQuote)]
-
-        # L3 live award space (Engine A / seats.aero). Pooled with chart quotes so
-        # the verification core applies live precedence + cross-check (§2.5, §7).
-        with obs.span("gather:award", obs.KIND_CHAIN, input_value=route.key()) as s:
-            live = [
-                q
-                for q in registry.fetch(
-                    Query(route, Layer.AWARD, currency, programs=programs)
+        all_ratios: list[TransferRatio] = []
+        award_quotes: list[AwardQuote] = []
+        live_total = 0
+        for cur in wallet:
+            programs = reachable_award_programs(config, cur)
+            with obs.span(
+                "gather:charts", obs.KIND_CHAIN, input_value=f"{route.key()}:{cur}"
+            ) as s:
+                chart_quotes = registry.fetch(
+                    Query(
+                        route,
+                        Layer.CHARTS,
+                        cur,
+                        programs=programs,
+                        start_date=start_date,
+                        end_date=end_date,
+                    )
                 )
-                if isinstance(q, AwardQuote)
-            ]
-            obs.set_output(s, f"{len(live)} live award quote(s)")
-        award_quotes += live
+                obs.set_output(s, f"{len(chart_quotes)} chart quote(s) ({cur})")
+            all_ratios.extend(
+                q for q in chart_quotes if isinstance(q, TransferRatio)
+            )
+            award_quotes.extend(
+                q for q in chart_quotes if isinstance(q, AwardQuote)
+            )
+
+            with obs.span(
+                "gather:award", obs.KIND_CHAIN, input_value=f"{route.key()}:{cur}"
+            ) as s:
+                live = [
+                    q
+                    for q in registry.fetch(
+                        Query(
+                            route,
+                            Layer.AWARD,
+                            cur,
+                            programs=programs,
+                            start_date=start_date,
+                            end_date=end_date,
+                            nonstop_only=nonstop,
+                        )
+                    )
+                    if isinstance(q, AwardQuote)
+                ]
+                live_total += len(live)
+                obs.set_output(s, f"{len(live)} live award quote(s) ({cur})")
+            award_quotes.extend(live)
+
         if on_step:
             on_step("crosscheck")
 
@@ -124,7 +193,7 @@ def run_quote(
             obs.set_output(
                 s,
                 f"fare={'ok' if vfare else 'none'}, "
-                f"awards={len(vawards)} verified",
+                f"awards={len(vawards)} verified, live={live_total}",
             )
 
         if on_step:
@@ -143,20 +212,66 @@ def run_quote(
                 ),
             }
 
+        alliances, program_transfers = load_alliance_data(config)
+        from .domain.surcharges import load_surcharges
+        from .providers.bonus_calendar import load_bonus_calendar, recent_expired_partners
+
+        surcharges = load_surcharges(config.knowledge_dir / "surcharges.yaml")
+        bonus_offers = load_bonus_calendar(
+            config.knowledge_dir / "bonus_calendar.yaml"
+        )
+
         with obs.span("optimize", obs.KIND_CHAIN) as s:
-            graph = build_graph(currency, ratios, vawards)
-            options = rank_paths(
-                graph,
-                currency,
-                vfare.cash_cents,
-                portal_cpp=user.portal_cpp(),
-                balance=balance,
-                fare_confidence=vfare.confidence,
-                fare_flags=vfare.flags,
-            )
-            portal = next(o for o in options if o.kind == "portal")
+            merged: list = []
+            portal = None
+            for cur in wallet:
+                ratios = [r for r in all_ratios if r.from_currency == cur]
+                graph = build_graph(
+                    cur,
+                    ratios,
+                    vawards,
+                    program_transfers=program_transfers,
+                    alliances=alliances,
+                )
+                opts = rank_paths(
+                    graph,
+                    cur,
+                    vfare.cash_cents,
+                    portal_cpp=user.portal_cpp(cur),
+                    balance=user.balances.get(cur, 0),
+                    fare_confidence=vfare.confidence,
+                    fare_flags=vfare.flags,
+                    surcharges=surcharges,
+                )
+                for o in opts:
+                    if o.kind == "portal" and portal is None and cur == primary:
+                        portal = o
+                    merged.append(o)
+
+            # Deduplicate identical transfer labels keeping highest cpp.
+            by_label: dict[str, object] = {}
+            for o in merged:
+                prev = by_label.get(o.label)
+                if prev is None or o.cpp > prev.cpp:  # type: ignore[attr-defined]
+                    by_label[o.label] = o
+            options = sorted(by_label.values(), key=lambda o: o.cpp, reverse=True)
             transfers = [o for o in options if o.kind == "transfer"]
-            verdict = conclude_winner(route, portal, transfers)
+            if portal is None:
+                portal = next((o for o in options if o.kind == "portal"), None)
+
+            recent = []
+            for cur in wallet:
+                recent.extend(
+                    o.to_program
+                    for o in recent_expired_partners(bonus_offers, currency=cur)
+                )
+            verdict = conclude_winner(
+                route,
+                portal,
+                transfers,
+                preferences=user.preferences,
+                recent_bonus_programs=list(dict.fromkeys(recent)),
+            )
             obs.set_output(s, f"{verdict.label.value} ({len(options)} options)")
 
         bt = verdict.best_transfer
@@ -744,6 +859,84 @@ def run_discover(
     return 0
 
 
+def run_refresh_bonuses(config: Config) -> int:
+    """Scrape Roame JSON-LD into knowledge/bonus_calendar.yaml."""
+    from .providers.bonus_calendar import fetch_roame_bonuses, save_bonus_calendar
+
+    path = config.knowledge_dir / "bonus_calendar.yaml"
+    try:
+        offers = fetch_roame_bonuses()
+    except Exception as exc:
+        print(f"refresh-bonuses failed: {exc}", file=sys.stderr)
+        return 1
+    save_bonus_calendar(path, offers)
+    active = [o for o in offers if o.status == "active"]
+    print(f"Wrote {len(offers)} offers ({len(active)} active) -> {path}")
+    for o in offers:
+        print(
+            f"  {o.status:8} {o.from_currency:15} -> {o.to_program:20} "
+            f"x{o.bonus_multiplier} until {o.valid_until}"
+        )
+    return 0
+
+
+def run_check_watches(
+    config: Config,
+    repo: Repository,
+    registry: ProviderRegistry,
+    *,
+    user_id: Optional[str] = None,
+) -> int:
+    """Re-quote saved watches and report material changes."""
+    from .domain.watches import apply_check_result, watch_changed
+
+    watches = (
+        repo.list_watches(user_id)
+        if user_id
+        else repo.list_all_active_watches()
+    )
+    if not watches:
+        print("No active watches.")
+        return 0
+
+    fired = 0
+    for w in watches:
+        user = repo.get_user(w.user_id) or User(
+            user_id=w.user_id,
+            balances={c: 200000 for c in w.currencies},
+        )
+        for c in w.currencies:
+            user.balances.setdefault(c, 200000)
+        route = Route(w.origin, w.dest, Cabin(w.cabin))
+        raw = run_quote(
+            route,
+            user,
+            w.currencies[0],
+            registry=registry,
+            repo=repo,
+            config=config,
+            currencies=list(w.currencies),
+        )
+        payload = quote_result_to_dict(raw)
+        reasons = watch_changed(w, payload)
+        apply_check_result(w, payload)
+        repo.put_watch(w)
+        tag = w.watch_id[:8]
+        if reasons:
+            fired += 1
+            print(
+                f"[ALERT] {tag} {w.origin}->{w.dest} {w.cabin} "
+                f"user={w.user_id}: {', '.join(reasons)}"
+            )
+        else:
+            print(
+                f"[ok]    {tag} {w.origin}->{w.dest} "
+                f"verdict={payload.get('verdict')}"
+            )
+    print(f"Checked {len(watches)} watch(es); {fired} alert(s).")
+    return 0
+
+
 def run_scrape_daily(config: Config, repo: Optional[Repository] = None) -> int:
     """Daily scrape for cron — discovery + chart scrape, persisted to Redis/file."""
     from .providers.aggregator.live_scrape import run_daily_scrape
@@ -832,6 +1025,19 @@ def build_parser() -> argparse.ArgumentParser:
         "Redis Cloud (MILEAGE_REDIS_URL) or daily_scrape.json",
     )
 
+    sub.add_parser(
+        "refresh-bonuses",
+        help="scrape live transfer-bonus calendar (Roame JSON-LD) into "
+        "knowledge/bonus_calendar.yaml",
+    )
+
+    cw = sub.add_parser(
+        "check-watches",
+        help="re-quote every active saved trip; print changes "
+        "(space / bonus / verdict)",
+    )
+    cw.add_argument("--user", default=None, help="limit to one user_id")
+
     p = sub.add_parser("providers", help="provider federation status + quota")
     p.add_argument("--json", action="store_true")
 
@@ -911,6 +1117,14 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.command == "scrape-daily":
             return run_scrape_daily(config, repo)
+
+        if args.command == "refresh-bonuses":
+            return run_refresh_bonuses(config)
+
+        if args.command == "check-watches":
+            return run_check_watches(
+                config, repo, registry, user_id=getattr(args, "user", None)
+            )
 
         if args.command == "demo":
             return run_demo(registry, repo, config)

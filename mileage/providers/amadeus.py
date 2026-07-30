@@ -54,7 +54,7 @@ class AmadeusProvider:
         if q.layer != Layer.FARES or self.health() == ProviderHealth.DOWN:
             return []
         try:
-            return self._fetch_fares(q.route)
+            return self._fetch_fares(q.route, start_date=q.start_date)
         except Exception as exc:  # never crash the run
             log.warning("amadeus fetch failed: %s", exc)
             return []
@@ -76,10 +76,15 @@ class AmadeusProvider:
         self._token = resp.json()["access_token"]
         return self._token
 
-    def _fetch_fares(self, route: Route) -> list[FareQuote]:
+    def _fetch_fares(
+        self, route: Route, *, start_date: Optional[str] = None
+    ) -> list[FareQuote]:
         from datetime import date, timedelta
 
-        depart = (date.today() + timedelta(days=30)).isoformat()
+        # Prefer the travel-window start when the UI/API sent one; else ~today+30.
+        depart = (start_date or "").strip() or (
+            date.today() + timedelta(days=30)
+        ).isoformat()
         travel_class = {
             "economy": "ECONOMY",
             "premium_economy": "PREMIUM_ECONOMY",

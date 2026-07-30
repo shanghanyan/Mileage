@@ -25,12 +25,18 @@ mileage/knowledge/daily_scrape.json
 # debugging output, not source.
 _debug_dumps/
 
+# Beta daily route sweep logs (tests/test_beta_daily_routes.py)
+logs/beta_daily/
+
 # Env / secrets
 .env
 
 # Personal planning / discovery docs (Cursor agent briefs, architecture notes)
 Cursor-*.md
 Cursor-Mileage-Beta.md
+Stitch-UI-Components.txt
+Stitch-UI-Gaps.txt
+Stitch-Run-Search.txt
 Mileage-Plan.md
 mileage-ui-mockup.html
 

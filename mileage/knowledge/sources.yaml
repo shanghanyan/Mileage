@@ -427,6 +427,92 @@ targets:
     updated_at: "2026-07-20"
     layers: [charts]
 
+  # ── TIER 3 EXPANSION (2026-07-28) — more US / oneworld metal ──────────────
+  # URLs confirmed live via awardtravelfinder.com/award-charts hub hrefs
+  # (200 OK). Same ATF generator as Tier 2; trust stays conservative for
+  # dynamic / baseline charts until a deep parse pass.
+
+  - name: atf-alaska-chart
+    url: https://awardtravelfinder.com/award-charts/alaska-airlines
+    format: html_table_wide
+    program: alaska
+    provides: chart
+    role: primary
+    trust: 0.55
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  - name: atf-american-chart
+    url: https://awardtravelfinder.com/award-charts/american-airlines
+    format: html_table_wide
+    program: american
+    provides: chart
+    role: primary
+    trust: 0.45
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  - name: atf-delta-chart
+    url: https://awardtravelfinder.com/award-charts/delta-skymiles
+    format: html_table_wide
+    program: delta
+    provides: chart
+    role: fallback   # fully dynamic; ATF page is illustrative baselines
+    trust: 0.25
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  - name: atf-qatar-chart
+    url: https://awardtravelfinder.com/award-charts/qatar-airways
+    format: html_table_wide
+    program: qatar
+    provides: chart
+    role: primary
+    trust: 0.5
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  - name: atf-iberia-chart
+    url: https://awardtravelfinder.com/award-charts/iberia
+    format: html_table_wide
+    program: iberia
+    provides: chart
+    role: primary
+    trust: 0.45
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  # 10xtravel blog fallbacks for the new programs (confirmed 200 OK 2026-07-28).
+  - name: 10x-alaska-chart
+    url: https://10xtravel.com/alaska-airlines-mileage-plan-award-charts/
+    format: html_table_wide
+    program: alaska
+    provides: chart
+    role: fallback
+    trust: 0.4
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  - name: 10x-american-chart
+    url: https://10xtravel.com/american-airlines-aadvantage-award-charts/
+    format: html_table_wide
+    program: american
+    provides: chart
+    role: fallback
+    trust: 0.35
+    updated_at: "2026-07-28"
+    layers: [charts]
+
+  - name: 10x-qatar-chart
+    url: https://10xtravel.com/qatar-airways-privilege-club-award-charts/
+    format: html_table_wide
+    program: qatar
+    provides: chart
+    role: fallback
+    trust: 0.4
+    updated_at: "2026-07-28"
+    layers: [charts]
+
   # ── L3 LIVE AWARD SPACE ────────────────────────────────────────────────────
   #
   # Candidate public L3 sources evaluated (NOT added — see notes):
@@ -439,16 +525,19 @@ targets:
   #       provider (SeatsAeroProvider), off by default — not an aggregator target.
 
   # Placeholder fixture — stands in for a live seats.aero partner API call.
-  # Real replacement: configure SEATS_AERO_KEY and wire SeatAeroProvider (§7).
-  # Turkish/Aeroplan/LifeMiles live space flows through here in demo mode.
+  # Real replacement: configure SEATS_AERO_API_KEY (SeatsAeroProvider is already
+  # registered). Turkish/Aeroplan/LifeMiles live space flows through here in
+  # offline/demo mode only (offline_only: true).
   - name: starnet-award-space
     url: file://fixtures/starnet_award_space.json
     format: json
     provides: award
-    role: primary   # sole L3 live-award source (placeholder for the seats.aero call)
+    # Offline/CI fixture only. Live L3 is seats.aero when SEATS_AERO_API_KEY is set.
+    role: fallback
     trust: 0.30
     updated_at: "2026-06-24"
     layers: [award]
+    offline_only: true
 
   # ── OFFLINE / TEST FIXTURES ────────────────────────────────────────────────
 

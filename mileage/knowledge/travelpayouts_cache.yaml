@@ -14,3 +14,17 @@ fares:
   SFO-NRT-business: 375000
   NRT-SFO-business: 375000
   LAX-LHR-business: 355000
+  SJC-LAX-economy: 9200
+  LAX-SJC-economy: 9200
+  SFO-LAX-economy: 10200
+  LAX-SFO-economy: 10200
+  OAK-LAX-economy: 8800
+  LAX-OAK-economy: 8800
+  SAN-SFO-economy: 11500
+  SFO-SAN-economy: 11500
+  SJC-SAN-economy: 9800
+  SAN-SJC-economy: 9800
+  SFO-JFK-economy: 18000
+  JFK-SFO-economy: 18000
+  SEA-LAX-economy: 12500
+  LAX-SEA-economy: 12500

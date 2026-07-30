@@ -1,0 +1,156 @@
+# Airline alliances + rare program→program transfers.
+#
+# Alliance membership lets the optimizer label paths with which metal you can
+# book (e.g. Cap One → Aeroplan books Star Alliance, including United — even
+# though Cap One has no direct United transfer). Charts still price the seat;
+# this file only adds reachability metadata and optional second-hop edges.
+#
+# program_transfers: loyalty→loyalty point moves (not alliance booking).
+# Most airline programs do NOT transfer out. Hotel→airline is the common case.
+# These edges compound when the source program is already reachable from the
+# user's currency (multi-hop: currency → A → B → SEAT).
+
+alliances:
+  star_alliance:
+    name: Star Alliance
+    programs:
+      - aeroplan          # Air Canada
+      - united            # United MileagePlus
+      - turkish           # Turkish Miles&Smiles
+      - lifemiles         # Avianca
+      - ana               # ANA Mileage Club
+      - krisflyer         # Singapore
+      - eva               # EVA Infinity MileageLands
+      - asiana            # Asiana Club
+      - swiss             # Miles & More (LX)
+      - lufthansa         # Miles & More (LH)
+      - copa              # ConnectMiles
+      - air_china         # Phoenix Miles
+      - air_india         # Maharaja Club
+      - ethiopian         # ShebaMiles
+      - egyptair          # EgyptAir Plus
+      - thai              # Royal Orchid Plus
+      - tap               # Miles&Go
+      - sas               # EuroBonus
+      - air_new_zealand   # Airpoints
+
+  skyteam:
+    name: SkyTeam
+    programs:
+      - flying_blue       # Air France / KLM
+      - delta             # SkyMiles
+      - virgin_atlantic   # Flying Club (SkyTeam partner awards via AF/KL)
+      - aeromexico        # Club Premier
+      - korean            # SKYPASS
+      - china_eastern     # Eastern Miles
+      - garuda            # GarudaMiles
+      - saudi             # Alfursan
+      - mea               # Cedar Miles
+      - aeroflot          # Aeroflot Bonus
+      - china_airlines    # Dynasty Flyer (SkyTeam)
+      - vietnam           # Lotusmiles
+      - kenya             # Asante Rewards
+      - tarom             # Flying Blue (codeshare member)
+
+  oneworld:
+    name: oneworld
+    programs:
+      - avios             # British Airways / Iberia / Aer Lingus (Avios)
+      - american          # AAdvantage
+      - alaska            # Mileage Plan
+      - cathay_pacific    # Asia Miles
+      - qantas            # Frequent Flyer
+      - finnair           # Finnair Plus
+      - japan_airlines    # JAL Mileage Bank
+      - malaysia          # Enrich
+      - qatar             # Privilege Club
+      - royal_jordanian   # Royal Plus
+      - sri_lankan        # FlySmiLes
+      - fiji              # Tabua Club
+      - royal_air_maroc   # Safar Flyer
+      - oman_air          # Sindbad
+
+  # Non-aligned / independent programs we still track for transfers.
+  independent:
+    name: Independent
+    programs:
+      - emirates          # Skywards
+      - etihad            # Guest
+      - jetblue           # TrueBlue
+      - southwest         # Rapid Rewards
+      - spirit            # Free Spirit
+      - frontier          # Frontier Miles
+
+# Loyalty→loyalty transfers (second hop). Ratios are points received per 1
+# source point. Secondary-sourced; re-verify before treating as authoritative.
+program_transfers:
+  # Marriott Bonvoy → airlines (typical 3:1 = 0.333…). Useful when Marriott
+  # is the user's currency OR an intermediate node later.
+  - from: marriott_bonvoy
+    to: aeroplan
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+  - from: marriott_bonvoy
+    to: united
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+  - from: marriott_bonvoy
+    to: flying_blue
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+  - from: marriott_bonvoy
+    to: delta
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+  - from: marriott_bonvoy
+    to: american
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+  - from: marriott_bonvoy
+    to: alaska
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+  - from: marriott_bonvoy
+    to: virgin_atlantic
+    ratio: 0.333
+    source: "Marriott Bonvoy transfer partners (3:1 typical airline rate)"
+    trust: 0.75
+    updated_at: "2026-07-01"
+
+  # Hilton Honors → airlines (often weaker than Marriott; 2:1 or worse).
+  - from: hilton
+    to: flying_blue
+    ratio: 0.5
+    source: "Hilton Honors transfer partners (approx 2:1)"
+    trust: 0.7
+    updated_at: "2026-07-01"
+  - from: hilton
+    to: virgin_atlantic
+    ratio: 0.5
+    source: "Hilton Honors transfer partners (approx 2:1)"
+    trust: 0.7
+    updated_at: "2026-07-01"
+  - from: hilton
+    to: turkish
+    ratio: 0.5
+    source: "Hilton Honors transfer partners (approx 2:1)"
+    trust: 0.7
+    updated_at: "2026-07-01"
+  - from: hilton
+    to: qatar
+    ratio: 0.5
+    source: "Hilton Honors transfer partners (approx 2:1)"
+    trust: 0.7
+    updated_at: "2026-07-01"

@@ -133,6 +133,7 @@ class CuratedProvider:
         self._ratios = self._load("ratios.yaml")
         self._charts = self._load("charts.yaml")
         self._fares = self._load("fares.yaml")
+        self._bonus_calendar = self._load("bonus_calendar.yaml")
         # Injectable "today" so bonus windows are hermetic under tests.
         self._as_of = as_of or date.today()
 
@@ -204,7 +205,46 @@ class CuratedProvider:
                             bonus_label=label,
                         )
                     )
+        # Overlay live bonus calendar (scraped) — never hand-seed ratios.yaml.
+        out.extend(self._bonus_calendar_ratios(q, out))
         return out
+
+    def _bonus_calendar_ratios(
+        self, q: Query, base_rows: list[TransferRatio]
+    ) -> list[TransferRatio]:
+        from .bonus_calendar import BonusOffer, active_bonus_ratios
+
+        offers: list[BonusOffer] = []
+        for row in self._bonus_calendar.get("offers") or []:
+            if not isinstance(row, dict):
+                continue
+            offers.append(
+                BonusOffer(
+                    from_currency=str(row["from_currency"]),
+                    to_program=str(row["to_program"]),
+                    bonus_multiplier=float(row.get("bonus_multiplier", 1.0)),
+                    valid_from=row.get("valid_from"),
+                    valid_until=row.get("valid_until"),
+                    label=row.get("label"),
+                    source_url=str(
+                        self._bonus_calendar.get("url")
+                        or "https://roame.travel/guides/points-transfer-bonuses"
+                    ),
+                    status=str(row.get("status") or "active"),
+                    raw_name=str(row.get("raw_name") or ""),
+                )
+            )
+        if not offers:
+            return []
+        base_by_prog = {
+            r.to_program: r.ratio
+            for r in base_rows
+            if r.from_currency == (q.currency or "capital_one") and not r.is_bonus
+        }
+        currency = q.currency or "capital_one"
+        return active_bonus_ratios(
+            offers, currency=currency, today=self._as_of, base_ratios=base_by_prog
+        )
 
     # --- award chart costs ------------------------------------------------- #
     def _award_quotes(self, q: Query) -> list[AwardQuote]:
@@ -227,15 +267,19 @@ class CuratedProvider:
                 trust=trust,
                 source_updated_at=_parse_date(spec.get("updated_at")),
             )
+            from ..domain.surcharges import estimate_taxes_cents
+
+            taxes, tax_flags, _ = estimate_taxes_cents(program)
             out.append(
                 AwardQuote(
                     program=program,
                     route=q.route,
                     miles=hit.miles,
                     seats_available=None,  # chart-only: availability unknown
+                    taxes_cents=taxes or None,
                     provenance=prov,
                     confidence=trust,
-                    flags=["no_live_space", *hit.flags],
+                    flags=["no_live_space", *hit.flags, *tax_flags],
                 )
             )
         return out

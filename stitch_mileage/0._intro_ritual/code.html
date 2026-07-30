@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mileage | Honest Points-to-Flights Advice</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e7e9e7",
+                    "secondary-fixed": "#ccead1",
+                    "primary": "#47614e",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e1e3e1",
+                    "on-primary-fixed-variant": "#334c3b",
+                    "surface-container-low": "#f2f4f2",
+                    "outline-variant": "#c2c8c1",
+                    "inverse-on-surface": "#eff1ef",
+                    "inverse-surface": "#2e3130",
+                    "primary-fixed-dim": "#b1ceb6",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#131e16",
+                    "inverse-primary": "#b1ceb6",
+                    "on-surface-variant": "#424843",
+                    "surface": "#f8faf8",
+                    "on-primary-container": "#f0fff1",
+                    "background": "#f8faf8",
+                    "on-primary-fixed": "#072011",
+                    "on-surface": "#191c1b",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#bdcabd",
+                    "secondary": "#4a6450",
+                    "surface-container": "#eceeec",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#334c3a",
+                    "on-secondary-container": "#506a56",
+                    "outline": "#737972",
+                    "on-secondary-fixed": "#072011",
+                    "on-background": "#191c1b",
+                    "on-tertiary-container": "#f2fff1",
+                    "surface-bright": "#f8faf8",
+                    "tertiary-container": "#6b776c",
+                    "surface-dim": "#d8dad8",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#ccead1",
+                    "tertiary": "#525e54",
+                    "tertiary-fixed": "#d9e6d9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "container-padding": "20px",
+                    "base": "4px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "12px",
+                    "xs": "8px"
+            },
+            "fontFamily": {
+                    "display-cpp": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "body-sm": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "title-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "display-cpp": ["40px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden; /* Lock scroll for the intro ritual screen */
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+
+        .ambient-shadow {
+            box-shadow: 0 8px 24px rgba(95, 122, 102, 0.08);
+        }
+
+        .ring-accent {
+            position: absolute;
+            border: 1px solid #DCDEDC;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .cta-active-state:active {
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+<link rel="stylesheet" href="/stitch/shared/unsupported.css"/>
+</head>
+<body class="sage-stable text-on-surface font-body-lg overflow-hidden h-screen w-full flex flex-col">
+<!-- Top Navigation Anchor (Suppressed based on Transactional/Intro Rule) -->
+<!-- The prompt defines an "Intro/Ritual" screen which is task-focused/onboarding, so global navigation is suppressed per the Semantic Shell Mandate. -->
+<main class="relative flex-1 w-full h-full flex flex-col items-center justify-center overflow-hidden px-container-padding">
+<!-- Stable CSS background (WebGL removed — caused green glitches) -->
+<!-- Subtle Geometric Accents (The Ring Outlines) -->
+<div class="ring-accent w-[300px] h-[300px] -top-20 -left-20 opacity-40"></div>
+<div class="ring-accent w-[450px] h-[450px] -bottom-32 -right-16 opacity-30"></div>
+<div class="ring-accent w-[150px] h-[150px] top-1/4 right-10 opacity-20"></div>
+<!-- Content Canvas -->
+<div class="relative z-10 flex flex-col items-center text-center max-w-sm">
+<!-- Logo Section -->
+<div class="mb-lg animate-float">
+<div class="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
+<img alt="Mileage Logo" class="w-full h-full object-contain drop-shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMspURiN1VJnZ88luA6jCaqG7lC5-n_7BSa-BxVH6ZusGf1RDFHTOOs0vg-9gnc4WQmBMW1_zdzknruUzzCYvswaIGie4eD4lqrLpaxEUhpuzvczyivd4FuySKLMu-Gf6mUkKjendSUYiXzZY0VpHBFYPJAN0GKd-DTgfaUPkCecjT40bc0gJwZhmIGP4JPb3dkEYwKrtHaRAYEwTDiFw1UesRzF8niMfSB0vI_ZfV1z2jSRk2SHfS"/>
+</div>
+</div>
+<!-- Typography Header -->
+<div class="space-y-sm mb-xl">
+<h1 class="font-display-cpp text-display-cpp text-primary tracking-tight">
+                    Mileage
+                </h1>
+<p class="font-title-md text-title-md text-secondary max-w-[280px] mx-auto leading-tight">
+                    Honest points-to-flights advice.
+                </p>
+</div>
+<!-- CTA Section -->
+<div class="w-full space-y-md">
+<button class="cta-active-state w-full py-md rounded-full font-label-caps text-label-caps uppercase tracking-widest shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-xs font-extrabold" id="cta-beta" style="color:#072011; background-color:#c5d4c8;">
+                    Try beta
+                    <span class="material-symbols-outlined text-[18px]" style="color:#072011;">arrow_forward</span>
+</button>
+<p class="font-label-caps text-label-caps text-outline opacity-60">
+                    Effortless Ascent v1.0.2
+                </p>
+</div>
+</div>
+<!-- Pointy's Vector Accent (Bottom Corner) -->
+<div class="absolute bottom-10 left-10 opacity-10 pointer-events-none hidden md:block">
+<span class="material-symbols-outlined text-primary text-[120px]" style="font-variation-settings: 'wght' 100;">flight_takeoff</span>
+</div>
+</main>
+<!-- Bottom Floating Status / Branding (Minimalist Glass) -->
+<div class="fixed bottom-lg left-1/2 -translate-x-1/2 z-20">
+<div class="glass-card ambient-shadow px-md py-xs rounded-full border border-outline-variant/30 flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-[#5F7A66] animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-primary opacity-80">System Ready</span>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.getElementById('cta-beta').addEventListener('click', function() {
+            const logo = document.querySelector('img');
+            if (logo) {
+              logo.style.transition = 'all 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)';
+              logo.style.transform = 'translateY(-40vh) rotate(-12deg) scale(0.55)';
+            }
+            const content = document.querySelector('.relative.z-10');
+            if (content) {
+              content.style.transition = 'opacity 0.4s ease';
+              content.style.opacity = '0';
+            }
+            setTimeout(() => {
+              window.location.href = '/stitch/1._quick_search/code.html';
+            }, 420);
+        });
+
+        </script>
+</body></html>

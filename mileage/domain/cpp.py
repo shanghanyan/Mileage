@@ -1,24 +1,22 @@
-"""Cents-per-point math, with per-hop compounding.
+"""Cents-per-point math, with per-hop compounding and award-tax netting.
 
-CPP (cents per point) = cash value unlocked (in cents) / source points spent.
-Higher is better. The portal floor is a fixed CPP by card product.
-
-Phase 0 uses a single transfer hop (Capital One -> partner program), but the
-compounding helpers are written for the multi-hop north star so the graph
-optimizer (graph/optimize.py) never has to special-case hop count.
+CPP (cents per point) = net cash value unlocked (in cents) / source points spent.
+Higher is better. Award taxes/surcharges reduce net value so Avios/BA-style
+awards don't look better than they feel at booking time.
 """
 
 from __future__ import annotations
 
 import math
-from typing import Iterable
+from typing import Iterable, Optional
 
 
-def cpp(cash_cents: int, source_points: int) -> float:
-    """Cents of value per source point. Returns 0.0 if no points are spent."""
+def cpp(cash_cents: int, source_points: int, *, taxes_cents: int = 0) -> float:
+    """Cents of *net* value per source point. Returns 0.0 if no points spent."""
     if source_points <= 0:
         return 0.0
-    return cash_cents / source_points
+    net = max(0, cash_cents - max(0, taxes_cents))
+    return net / source_points
 
 
 def portal_points_needed(cash_cents: int, portal_cpp: float) -> int:
@@ -47,7 +45,17 @@ def compound_ratio(ratios: Iterable[float]) -> float:
     return total
 
 
-def transfer_cpp(cash_cents: int, program_miles: int, ratio: float) -> float:
+def transfer_cpp(
+    cash_cents: int,
+    program_miles: int,
+    ratio: float,
+    *,
+    taxes_cents: int = 0,
+) -> float:
     """End-to-end CPP for a single-currency transfer redemption."""
     pts = source_points_for_award(program_miles, ratio)
-    return cpp(cash_cents, pts)
+    return cpp(cash_cents, pts, taxes_cents=taxes_cents)
+
+
+def net_value_cents(cash_cents: int, taxes_cents: Optional[int] = None) -> int:
+    return max(0, cash_cents - max(0, taxes_cents or 0))

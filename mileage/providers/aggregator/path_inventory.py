@@ -23,7 +23,7 @@ from .sources import load_targets
 _PROVIDER_CONFIG: dict[str, Optional[str]] = {
     "amadeus": "AMADEUS_CLIENT_ID + AMADEUS_CLIENT_SECRET",
     "seats_aero": "SEATS_AERO_API_KEY",
-    "aviationstack": None,
+    "aviationstack": "AVIATIONSTACK_API_KEY",
     "travelpayouts": None,
     "curated": None,
     "aggregator": None,
@@ -32,9 +32,9 @@ _PROVIDER_CONFIG: dict[str, Optional[str]] = {
 _PROVIDER_NOTES: dict[str, str] = {
     "aggregator": "Chart targets in sources.yaml — checked via live scrape below",
     "amadeus": "L1/L2 cash fares (not points charts)",
-    "aviationstack": "Stub — not implemented",
+    "aviationstack": "L1 schedules only — not cash fares or award space",
     "curated": "Static YAML ratios/charts — Phase 0 fallback",
-    "seats_aero": "fetch() returns [] until paid API is wired",
+    "seats_aero": "Live L3 when SEATS_AERO_API_KEY is set; else skipped",
     "travelpayouts": "Cached fares from travelpayouts_cache.yaml",
 }
 

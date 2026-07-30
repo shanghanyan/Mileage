@@ -21,6 +21,7 @@ import {
   CARD_PRODUCTS,
   CURRENCIES,
   TRAVEL_WINDOWS,
+  datesForTravelWindow,
   currencyLabel,
   currencyShort,
   type Cabin,
@@ -278,7 +279,6 @@ export default function App() {
   const originCode = resolveAirport(origin)?.code ?? origin;
   const destCode = resolveAirport(dest)?.code ?? dest;
   const airportsValid = isKnownAirport(origin) && isKnownAirport(dest);
-  const routeSupported = routeHasFare(origin, dest, cabin);
   const travelLabel =
     TRAVEL_WINDOWS.find((w) => w.id === travelWindow)?.label ?? travelWindow;
 
@@ -386,12 +386,6 @@ export default function App() {
       setError("Choose a valid airport from the suggestions.");
       return;
     }
-    if (!routeSupported) {
-      setError(
-        `No verified fare data for ${originCode}→${destCode} ${cabin}. Try a demo route or LAX→JFK economy / LAX→IST business.`,
-      );
-      return;
-    }
 
     setLoading(true);
     setResult(null);
@@ -400,6 +394,7 @@ export default function App() {
     setStepsDone([]);
 
     try {
+      const dates = datesForTravelWindow(travelWindow);
       const { run_id } = await startRedemption({
         origin: originCode,
         dest: destCode,
@@ -407,6 +402,9 @@ export default function App() {
         currency,
         miles: parseMiles(miles),
         card: currency === "capital_one" ? card : "venture_x",
+        start_date: dates.start_date,
+        end_date: dates.end_date,
+        travel_window: travelWindow,
       });
 
       const finalStatus: RunStatusResponse = await pollUntilComplete(
@@ -465,6 +463,9 @@ export default function App() {
             >
               Optimizer
             </button>
+            <a className="page-tab" href="/stitch/">
+              Stitch
+            </a>
             <button
               type="button"
               className={`page-tab${view === "debug" ? " active" : ""}`}
@@ -658,7 +659,7 @@ export default function App() {
             <button
               className="cta"
               type="submit"
-              disabled={loading || !airportsValid || !routeSupported}
+              disabled={loading || !airportsValid}
             >
               {loading ? "Running pipeline…" : "Find best routes"}
             </button>

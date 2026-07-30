@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mileage - Quick Search</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/stitch/shared/unsupported.css"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="/stitch/shared/mileage-api.js"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#47614e",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#5f7a66",
+                    "secondary-container": "#ccead1",
+                    "on-secondary-container": "#506a56",
+                    "surface": "#f8faf8",
+                    "on-surface": "#191c1b",
+                    "on-surface-variant": "#424843",
+                    "outline": "#737972",
+                    "outline-variant": "#c2c8c1",
+                    "surface-container-low": "#f2f4f2",
+                    "surface-dim": "#d8dad8",
+                    "inverse-surface": "#2e3130",
+                    "primary-fixed": "#ccead2"
+            },
+            "spacing": {
+                    "md": "16px", "xl": "32px", "container-padding": "20px",
+                    "base": "4px", "sm": "12px", "lg": "24px", "xs": "8px"
+            },
+            "fontFamily": {
+                    "display-cpp": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "title-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+</script>
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  .ambient-shadow { box-shadow: 0 8px 24px rgba(95, 122, 102, 0.08); }
+  .scroll-wheel-mask {
+    mask-image: linear-gradient(to right, transparent, black 40%, black 60%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 40%, black 60%, transparent);
+  }
+  .active-wheel-item { transform: scale(1.15); color: #47614e; font-weight: 800; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .window-chip.selected {
+    background: #ccead1;
+    color: #506a56;
+    border-color: #47614e;
+  }
+  #run-status { min-height: 1.25rem; }
+</style>
+</head>
+<body class="sage-stable min-h-screen flex flex-col overflow-x-hidden">
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl flex justify-between items-center px-container-padding py-sm">
+  <div class="flex items-center gap-xs">
+    <span class="material-symbols-outlined text-primary">flight_takeoff</span>
+    <h1 class="font-display-cpp text-title-md text-primary tracking-tight">Mileage</h1>
+  </div>
+  <a href="/stitch/4._wallet_settings/code.html" class="hover:opacity-80"><span class="material-symbols-outlined text-primary">account_balance_wallet</span></a>
+</header>
+
+<main class="flex-1 flex flex-col items-center justify-center px-container-padding pt-24 pb-32 z-10">
+<div class="w-full max-w-md space-y-lg">
+
+<section class="relative glass-card ambient-shadow rounded-xl p-lg border border-outline-variant/30" id="step1">
+  <details class="ns-tip">
+    <summary title="About origin vs destination"><span class="material-symbols-outlined">info</span></summary>
+    <div class="ns-panel"><strong>Origin vs dest</strong>Origin must be a 3-letter airport (LAX). Destination can be a city name or code. Home airport is saved in Wallet.</div>
+  </details>
+
+  <!-- Origin chip + change -->
+  <div class="mb-md pr-8 flex flex-wrap items-center gap-xs">
+    <span id="origin-chip" class="inline-flex items-center bg-secondary-container text-on-secondary-container font-label-caps text-label-caps px-md py-1 rounded-full">
+      <span class="material-symbols-outlined text-[14px] mr-1">flight_takeoff</span>
+      From <span id="origin-label">—</span>
+    </span>
+    <button type="button" id="btn-change-origin" class="font-label-caps text-label-caps text-primary underline underline-offset-2 px-xs py-1">
+      Change origin
+    </button>
+  </div>
+
+  <!-- Origin editor (shown for first-time or when changing) -->
+  <div id="origin-editor" class="hidden mb-md space-y-xs">
+    <label class="font-label-caps text-label-caps text-outline" for="origin-input">Home airport (required IATA)</label>
+    <div class="flex gap-xs">
+      <input id="origin-input" maxlength="3" class="flex-1 uppercase bg-surface-container-low border-2 border-outline-variant focus:border-primary focus:ring-0 rounded-xl px-md py-sm font-body-lg text-on-surface placeholder-outline tracking-widest" placeholder="LAX" type="text" autocomplete="off"/>
+      <button type="button" id="btn-save-origin" class="bg-primary text-white font-label-caps text-label-caps px-md py-sm rounded-xl">Save</button>
+    </div>
+    <p id="origin-hint" class="font-body-sm text-outline">First time? Set your home airport — we’ll remember it in Wallet.</p>
+  </div>
+
+  <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-sm">Where do you want to go?</h2>
+  <input id="dest-input" class="w-full bg-surface-container-low border-2 border-outline-variant focus:border-primary focus:ring-0 rounded-xl px-md py-lg font-body-lg text-on-surface placeholder-outline" placeholder="IST or Istanbul" type="text" value="IST"/>
+</section>
+
+<section class="relative glass-card ambient-shadow rounded-xl p-lg border border-outline-variant/30" id="step2">
+  <details class="ns-tip">
+    <summary title="Not supported yet"><span class="material-symbols-outlined">info</span></summary>
+    <div class="ns-panel"><strong>Beta gap</strong>Year wheel is visual only. Window chips map to start/end dates for live seat search when seats.aero is keyed; charts still use route + cabin.</div>
+  </details>
+  <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-md pr-8">Roughly when?</h2>
+  <div class="relative w-full h-16 flex items-center justify-center mb-lg opacity-70">
+    <div class="absolute inset-0 flex justify-center pointer-events-none">
+      <div class="w-20 border-x border-primary/20 bg-primary/5 rounded-lg"></div>
+    </div>
+    <div class="scroll-wheel-mask no-scrollbar overflow-x-auto flex items-center gap-xl w-full snap-x snap-mandatory">
+      <div class="flex-shrink-0 w-[40%]"></div>
+      <div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2026</div>
+      <div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2027</div>
+      <div class="snap-center font-display-cpp text-[40px] text-primary font-extrabold active-wheel-item">2028</div>
+      <div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2029</div>
+      <div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2030</div>
+      <div class="flex-shrink-0 w-[40%]"></div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-xs" id="window-chips">
+    <button type="button" data-window="flexible" class="window-chip selected font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent">Flexible</button>
+    <button type="button" data-window="non_holiday" class="window-chip bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent">Non-holiday</button>
+    <button type="button" data-window="peak_summer" class="window-chip bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent">Peak Summer</button>
+    <button type="button" data-window="holidays" class="window-chip bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent">Holidays</button>
+  </div>
+</section>
+
+<button id="run-search" type="button" class="w-full bg-primary text-on-primary font-headline-lg-mobile text-headline-lg-mobile py-lg rounded-full active:scale-95 transition-transform duration-200 shadow-lg shadow-primary/20 flex items-center justify-center gap-xs">
+  <span id="run-label">Run Search</span>
+  <span class="material-symbols-outlined">trending_flat</span>
+</button>
+<p id="run-status" class="font-body-sm text-outline text-center"></p>
+</div>
+</main>
+
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-lg pt-sm bg-surface/80 backdrop-blur-xl border-t border-outline-variant rounded-t-xl shadow-[0_-8px_24px_rgba(95,122,102,0.08)]">
+  <a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1" href="/stitch/1._quick_search/code.html">
+    <span class="material-symbols-outlined">home</span>
+    <span class="font-label-caps text-label-caps">Home</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-outline px-4 py-1" href="/stitch/2._trips_saved/code.html">
+    <span class="material-symbols-outlined">bookmark</span>
+    <span class="font-label-caps text-label-caps">Saved</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-outline px-4 py-1" href="/stitch/5._wishlist/code.html">
+    <span class="material-symbols-outlined">favorite</span>
+    <span class="font-label-caps text-label-caps">Wishlist</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-outline px-4 py-1" href="/stitch/4._wallet_settings/code.html">
+    <span class="material-symbols-outlined">account_balance_wallet</span>
+    <span class="font-label-caps text-label-caps">Wallet</span>
+  </a>
+</nav>
+
+<script>
+(function () {
+  let travelWindow = "flexible";
+  let originCode = MileageAPI.getHomeOrigin();
+
+  const originLabel = document.getElementById("origin-label");
+  const originEditor = document.getElementById("origin-editor");
+  const originInput = document.getElementById("origin-input");
+  const originHint = document.getElementById("origin-hint");
+  const btnChange = document.getElementById("btn-change-origin");
+  const btnSaveOrigin = document.getElementById("btn-save-origin");
+
+  function refreshOriginUI() {
+    originCode = MileageAPI.getHomeOrigin();
+    if (originCode) {
+      originLabel.textContent = originCode;
+      originEditor.classList.add("hidden");
+      btnChange.classList.remove("hidden");
+      originHint.textContent = "Saved as your home airport (also in Wallet).";
+    } else {
+      originLabel.textContent = "set below";
+      originEditor.classList.remove("hidden");
+      btnChange.classList.add("hidden");
+      originHint.textContent = "First time? Set your home airport — we’ll remember it in Wallet.";
+      originInput.focus();
+    }
+  }
+
+  btnChange.addEventListener("click", () => {
+    originEditor.classList.toggle("hidden");
+    if (!originEditor.classList.contains("hidden")) {
+      originInput.value = originCode || "";
+      originInput.focus();
+    }
+  });
+
+  btnSaveOrigin.addEventListener("click", () => {
+    try {
+      originCode = MileageAPI.setHomeOrigin(originInput.value);
+      originHint.textContent = "Saved " + originCode;
+      refreshOriginUI();
+    } catch (e) {
+      originHint.textContent = e.message;
+    }
+  });
+
+  originInput.addEventListener("input", () => {
+    originInput.value = originInput.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+  });
+
+  refreshOriginUI();
+
+  const chips = document.querySelectorAll(".window-chip");
+  chips.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      chips.forEach((b) => {
+        b.classList.remove("selected");
+        b.classList.add("bg-surface-container-low", "text-on-surface-variant");
+      });
+      btn.classList.add("selected");
+      btn.classList.remove("bg-surface-container-low", "text-on-surface-variant");
+      travelWindow = btn.dataset.window;
+    });
+  });
+
+  const wheel = document.querySelector(".no-scrollbar");
+  if (wheel) {
+    window.addEventListener("load", () => {
+      const activeItem = document.querySelector(".active-wheel-item");
+      if (activeItem) {
+        const scrollLeft = activeItem.offsetLeft - wheel.offsetWidth / 2 + activeItem.offsetWidth / 2;
+        wheel.scrollTo({ left: scrollLeft, behavior: "auto" });
+      }
+    });
+  }
+
+  const statusEl = document.getElementById("run-status");
+  const labelEl = document.getElementById("run-label");
+  const btn = document.getElementById("run-search");
+
+  btn.addEventListener("click", async () => {
+    const dest = document.getElementById("dest-input").value.trim();
+    const origin = MileageAPI.getHomeOrigin() || originInput.value.trim();
+    btn.disabled = true;
+    labelEl.textContent = "Searching…";
+    statusEl.textContent = "Talking to Mileage API…";
+    try {
+      if (!MileageAPI.getHomeOrigin()) {
+        MileageAPI.setHomeOrigin(origin);
+        refreshOriginUI();
+      }
+      await MileageAPI.runQuote({
+        origin: MileageAPI.getHomeOrigin() || origin,
+        dest,
+        cabin: "business",
+        miles: 90000,
+        currency: "capital_one",
+        card: "venture_x",
+        travelWindow,
+        onProgress: (s) => {
+          statusEl.textContent = `Step: ${s.step || s.status}`;
+        },
+      });
+      statusEl.textContent = "Done — opening verdict";
+      window.location.href = "/stitch/3._verdict_screen/code.html";
+    } catch (err) {
+      statusEl.textContent = err.message || String(err);
+      if (/Failed to fetch|NetworkError|Start failed/.test(String(err))) {
+        statusEl.textContent += " — API offline; opening mock verdict";
+        setTimeout(() => {
+          window.location.href = "/stitch/3._verdict_screen/code.html?mock=1";
+        }, 900);
+      }
+      btn.disabled = false;
+      labelEl.textContent = "Run Search";
+    }
+  });
+})();
+</script>
+</body></html>

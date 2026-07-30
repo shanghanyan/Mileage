@@ -14,34 +14,19 @@ url: https://www.capitalone.com/credit-cards/benefits/transfer-partners/
 trust: 1.0            # authoritative for ratios (§7 authoritative short-circuit)
 updated_at: "2026-06-01"
 partners:
-  aeroplan:
-    ratio: 1.0          # Air Canada Aeroplan (Star Alliance)
-    # Demo transfer bonus — lets the optimizer rank base 1:1 vs boosted path.
-    # Window kept open through 2026 so local demos / tests see both options;
-    # expire or delete when a real calendar feed replaces this seed.
-    bonus: 1.3          # +30% (transfer 10k C1 → 13k Aeroplan)
-    valid_from: "2026-07-01"
-    valid_until: "2026-12-31"
-    label: "+30% Aeroplan transfer bonus"
+  aeroplan: 1.0       # Air Canada Aeroplan (Star Alliance) — 1:1, no live bonus
   turkish: 1.0        # Turkish Miles&Smiles (Star Alliance)
   lifemiles: 1.0      # Avianca LifeMiles (Star Alliance)
   krisflyer: 1.0      # Singapore KrisFlyer (Star Alliance)
-  eva: 0.75           # EVA Air Infinity MileageLands — ratio CORRECTED 2026-07-08.
-                      # Was hardcoded 1.0; Capital One actually transfers to EVA at
-                      # 2:1.5 (= 1:0.75), confirmed against
-                      # https://awardtravelfinder.com/credit-card-transfers/capital-one-miles
-                      # (verified Jul 08, 2026) and corroborated by general search
-                      # results citing the same 2:1.5 ratio. The official
-                      # capitalone.com transfer-partners page is JS-rendered and
-                      # could not be fetched directly to cross-check; treat this as
-                      # secondary-sourced (not the §7 authoritative short-circuit)
-                      # until confirmed against the official page.
-  # united: intentionally absent — see note above.
-  # --- Tier 2 expansion (2026-07-20) — ratios read off each program's own
-  # ATF award-chart page ("How to Earn X" transfer-partner list), not a
-  # separate transfer-partner page — secondary-sourced like the rest of this
-  # block below. Only added because a real chart source now exists in
-  # sources.yaml for each (see the 2026-07-20 entries there).
+  eva: 0.75           # EVA Infinity MileageLands — Cap One base is 2:1.5 (= 1:0.75)
+                      # confirmed against Award Travel Finder (2026-07-08). Official
+                      # capitalone.com page is JS-rendered; secondary-sourced until
+                      # re-verified against the issuer page.
+                      # Time-boxed transfer bonuses live in bonus_calendar.yaml
+                      # (scraped via `mileage refresh-bonuses`) — do NOT hand-seed
+                      # them here.
+  # united: intentionally absent — see note above. Book United metal via
+  # Star Alliance partners (Aeroplan / LifeMiles / Turkish / ANA / …).
   flying_blue: 1.0
   virgin_atlantic: 1.0
   avios: 1.0
@@ -49,6 +34,7 @@ partners:
   emirates: 0.75      # confirmed 4:3 on Emirates' own ATF chart page (not 1:1)
   etihad: 1.0
   qantas: 1.0
+  finnair: 1.0        # Finnair Plus (oneworld) — Cap One partner
 
 # --- Additional transferable currencies (Phase 7 data-only expansion, §13) ---
 # Each block is the same shape as the capital_one block above and is loaded by
@@ -89,6 +75,9 @@ currencies:
       emirates: 0.8         # confirmed 5:4 on Emirates' own ATF chart page
       etihad: 1.0
       qantas: 1.0
+      finnair: 1.0
+      qatar: 1.0         # Privilege Club (oneworld)
+      marriott_bonvoy: 1.0  # Amex → Marriott (hotel bank; then program_transfers)
 
   - from_currency: chase_ur
     source: "The Points Guy — Chase Ultimate Rewards transfer partners"
@@ -108,6 +97,10 @@ currencies:
       virgin_atlantic: 1.0
       avios: 1.0
       etihad: 1.0
+      united: 1.0        # Chase → United MileagePlus (added mid-2020s; confirm)
+      hyatt: 1.0         # Chase → World of Hyatt
+      marriott_bonvoy: 1.0
+      iberia: 1.0        # Avios via Iberia (same Avios family; chart uses avios)
 
   - from_currency: citi_typ
     source: "Award Travel Finder — Citi ThankYou Points transfer partners"
@@ -135,6 +128,8 @@ currencies:
       emirates: 0.8       # confirmed 5:4 on Emirates' own ATF chart page
       etihad: 1.0
       qantas: 1.0
+      qatar: 1.0
+      thai: 1.0
 
   - from_currency: bilt
     source: "Bilt Rewards — official transfer partners list"
@@ -156,3 +151,51 @@ currencies:
       cathay_pacific: 1.0
       emirates: 1.0       # Bilt is Emirates' only remaining 1:1 partner per its own page
       etihad: 1.0
+      united: 1.0
+      alaska: 1.0
+      hyatt: 1.0
+
+  - from_currency: wells_fargo
+    source: "The Points Guy — Wells Fargo Rewards transfer partners"
+    url: https://thepointsguy.com/guide/wells-fargo-transfer-partners/
+    trust: 0.75
+    updated_at: "2026-07-01"
+    partners:
+      flying_blue: 1.0
+      virgin_atlantic: 1.0
+      avios: 1.0
+      aeromexico: 1.0
+      choice: 1.0         # Choice Privileges (hotel)
+
+  - from_currency: marriott_bonvoy
+    source: "Marriott Bonvoy transfer partners"
+    url: https://www.marriott.com/loyalty/redeem/default.mi
+    trust: 0.8
+    updated_at: "2026-07-01"
+    # Hotel bank: typical airline transfers are 3:1 (0.333). Also mirrored in
+    # alliances.yaml program_transfers for multi-hop when Marriott is intermediate.
+    partners:
+      aeroplan: 0.333
+      united: 0.333
+      flying_blue: 0.333
+      delta: 0.333
+      american: 0.333
+      alaska: 0.333
+      virgin_atlantic: 0.333
+      ana: 0.333
+      qatar: 0.333
+      emirates: 0.333
+
+  - from_currency: hilton
+    source: "Hilton Honors transfer partners"
+    url: https://www.hilton.com/en/hilton-honors/
+    trust: 0.75
+    updated_at: "2026-07-01"
+    partners:
+      flying_blue: 0.5
+      virgin_atlantic: 0.5
+      turkish: 0.5
+      qatar: 0.5
+      ana: 0.5
+      alaska: 0.5
+      jetblue: 0.5

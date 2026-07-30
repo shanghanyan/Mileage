@@ -54,6 +54,8 @@ class Target:
     program: Optional[str] = None  # loyalty program (required for html_table_wide + pdf)
     hub: Optional[str] = None      # program origin airport (required for html_table_destination)
     role: str = "primary"          # primary | fallback (see _VALID_ROLES)
+    # When True, only used under MILEAGE_OFFLINE=1 (CI fixtures, not live).
+    offline_only: bool = False
     # Health, mutated by validate():
     last_status: Optional[int] = None
     last_404: bool = False
@@ -135,6 +137,7 @@ def load_targets(sources_path: Path) -> list[Target]:
                 program=str(raw["program"]).strip().lower() if raw.get("program") else None,
                 hub=str(raw["hub"]).strip().upper() if raw.get("hub") else None,
                 role=role,
+                offline_only=bool(raw.get("offline_only", False)),
             )
         )
     # Highest trust first: rotation/cross-check both prefer trusted sources.

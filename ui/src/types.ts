@@ -6,7 +6,10 @@ export type CurrencyId =
   | "amex_mr"
   | "chase_ur"
   | "citi_typ"
-  | "bilt";
+  | "bilt"
+  | "wells_fargo"
+  | "marriott_bonvoy"
+  | "hilton";
 
 export interface RedemptionRequest {
   origin: string;
@@ -15,6 +18,9 @@ export interface RedemptionRequest {
   currency: CurrencyId | string;
   miles: number;
   card: "venture" | "venture_x";
+  travel_window?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface PathOption {

@@ -63,10 +63,12 @@ def test_inventory_amadeus_down_without_creds(monkeypatch) -> None:
     assert amadeus.config_hint is not None
 
 
-def test_inventory_aviationstack_stub_note() -> None:
+def test_inventory_aviationstack_without_key_is_down(monkeypatch) -> None:
+    monkeypatch.delenv("AVIATIONSTACK_API_KEY", raising=False)
     config = Config(knowledge_dir=_KNOWLEDGE, offline=True)
     av = next(
         p for p in build_path_inventory(config).providers if p.name == "aviationstack"
     )
     assert av.health == "down"
-    assert av.note and "stub" in av.note.lower()
+    assert av.config_hint == "AVIATIONSTACK_API_KEY"
+    assert av.note and "schedules" in av.note.lower()

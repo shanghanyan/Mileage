@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mileage - Quick Search</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e7e9e7",
+                    "secondary-fixed": "#ccead1",
+                    "primary": "#47614e",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e1e3e1",
+                    "on-primary-fixed-variant": "#334c3b",
+                    "surface-container-low": "#f2f4f2",
+                    "outline-variant": "#c2c8c1",
+                    "inverse-on-surface": "#eff1ef",
+                    "inverse-surface": "#2e3130",
+                    "primary-fixed-dim": "#b1ceb6",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#131e16",
+                    "inverse-primary": "#b1ceb6",
+                    "on-surface-variant": "#424843",
+                    "surface": "#f8faf8",
+                    "on-primary-container": "#f0fff1",
+                    "background": "#f8faf8",
+                    "on-primary-fixed": "#072011",
+                    "on-surface": "#191c1b",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#bdcabd",
+                    "secondary": "#4a6450",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#ccead2",
+                    "primary-container": "#5f7a66",
+                    "secondary-fixed-dim": "#b1ceb5",
+                    "on-tertiary-fixed-variant": "#3e4a40",
+                    "surface-tint": "#4a6451",
+                    "surface-variant": "#e1e3e1",
+                    "error-container": "#ffdad6",
+                    "surface-container": "#eceeec",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#334c3a",
+                    "on-secondary-container": "#506a56",
+                    "outline": "#737972",
+                    "on-secondary-fixed": "#072011",
+                    "on-background": "#191c1b",
+                    "on-tertiary-container": "#f2fff1",
+                    "surface-bright": "#f8faf8",
+                    "tertiary-container": "#6b776c",
+                    "surface-dim": "#d8dad8",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#ccead1",
+                    "tertiary": "#525e54",
+                    "tertiary-fixed": "#d9e6d9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "container-padding": "20px",
+                    "base": "4px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "12px",
+                    "xs": "8px"
+            },
+            "fontFamily": {
+                    "display-cpp": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "body-sm": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "title-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "display-cpp": ["40px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8faf8; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .sage-mist-gradient {
+            background: radial-gradient(circle at top right, #e7e9e7 0%, #f8faf8 60%, #f2f4f2 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        .ambient-shadow {
+            box-shadow: 0 8px 24px rgba(95, 122, 102, 0.08);
+        }
+        .scroll-wheel-mask {
+            mask-image: linear-gradient(to right, transparent, black 40%, black 60%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 40%, black 60%, transparent);
+        }
+        .active-wheel-item {
+            transform: scale(1.2);
+            color: #47614e;
+            font-weight: 800;
+        }
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .ring-accent {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border: 1px solid #DCDEDC;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="sage-mist-gradient min-h-screen flex flex-col overflow-x-hidden">
+<!-- Top AppBar (from JSON) -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl flex justify-between items-center px-container-padding py-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed">flight_takeoff</span>
+<h1 class="font-display-cpp text-title-md text-primary dark:text-primary-fixed tracking-tight">Mileage</h1>
+</div>
+<div class="hover:opacity-80 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed">account_balance_wallet</span>
+</div>
+</header>
+<!-- Background Decoration -->
+<div class="ring-accent -top-20 -right-20 opacity-40"></div>
+<div class="ring-accent top-1/2 -left-32 opacity-20"></div>
+<main class="flex-1 flex flex-col items-center justify-center px-container-padding pt-24 pb-32 z-10">
+<!-- Step 1 & 2 Container -->
+<div class="w-full max-w-md space-y-lg">
+<!-- Step 1: Destination -->
+<section class="glass-card ambient-shadow rounded-xl p-lg border border-outline-variant/30 transition-all duration-500" id="step1">
+<div class="mb-md">
+<span class="inline-flex items-center bg-secondary-container text-on-secondary-container font-label-caps text-label-caps px-md py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px] mr-1">location_on</span>
+                        From [LAX]
+                    </span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-sm">Where do you want to go?</h2>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-2 border-outline-variant focus:border-primary focus:ring-0 rounded-xl px-md py-lg font-body-lg text-body-lg text-on-surface placeholder-outline transition-all" placeholder="Airport/City/Country" type="text"/>
+</div>
+</section>
+<!-- Step 2: Date Refinement -->
+<section class="glass-card ambient-shadow rounded-xl p-lg border border-outline-variant/30 transition-all duration-500" id="step2">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-md">Roughly when?</h2>
+<!-- Year Scroll Wheel -->
+<div class="relative w-full h-16 flex items-center justify-center mb-lg">
+<div class="absolute inset-0 flex justify-center pointer-events-none">
+<div class="w-20 border-x border-primary/20 bg-primary/5 rounded-lg"></div>
+</div>
+<div class="scroll-wheel-mask no-scrollbar overflow-x-auto flex items-center gap-xl px-1/2 w-full snap-x snap-mandatory">
+<!-- Spacer for center alignment -->
+<div class="flex-shrink-0 w-[40%]"></div>
+<div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2026</div>
+<div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2027</div>
+<div class="snap-center font-display-cpp text-[40px] text-primary font-extrabold active-wheel-item">2028</div>
+<div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2029</div>
+<div class="snap-center font-display-cpp text-[32px] text-outline opacity-40">2030</div>
+<div class="flex-shrink-0 w-[40%]"></div>
+</div>
+</div>
+<!-- Refinement Chips -->
+<div class="grid grid-cols-2 gap-xs">
+<button class="bg-secondary-container text-on-secondary-container font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent hover:border-primary transition-colors">
+                        Flexible
+                    </button>
+<button class="bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent hover:border-primary transition-colors">
+                        Non-holiday
+                    </button>
+<button class="bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent hover:border-primary transition-colors">
+                        Peak Summer
+                    </button>
+<button class="bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps py-md rounded-xl text-center border-2 border-transparent hover:border-primary transition-colors">
+                        Holidays
+                    </button>
+</div>
+</section>
+<!-- CTA Button -->
+<button class="w-full bg-primary text-on-primary font-headline-lg-mobile text-headline-lg-mobile py-lg rounded-full active:scale-95 transition-transform duration-200 shadow-lg shadow-primary/20 flex items-center justify-center gap-xs">
+<span>Run Search</span>
+<span class="material-symbols-outlined">trending_flat</span>
+</button>
+</div>
+</main>
+<!-- Bottom Navigation Bar (from JSON) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-md pb-lg pt-sm bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl border-t border-outline-variant dark:border-outline rounded-t-xl shadow-[0_-8px_24px_rgba(95,122,102,0.08)]">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<!-- Saved -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-label-caps text-label-caps">Saved</span>
+</a>
+<!-- Wishlist -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-caps text-label-caps">Wishlist</span>
+</a>
+<!-- Wallet -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps">Wallet</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for the year wheel centering
+        const wheel = document.querySelector('.no-scrollbar');
+        wheel.addEventListener('scroll', () => {
+            const items = wheel.querySelectorAll('.snap-center');
+            const centerX = wheel.scrollLeft + wheel.offsetWidth / 2;
+            
+            items.forEach(item => {
+                const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+                const distance = Math.abs(centerX - itemCenter);
+                
+                if (distance < 50) {
+                    item.classList.add('active-wheel-item', 'text-primary');
+                    item.classList.remove('text-outline', 'opacity-40');
+                } else {
+                    item.classList.remove('active-wheel-item', 'text-primary');
+                    item.classList.add('text-outline', 'opacity-40');
+                }
+            });
+        });
+
+        // Initialize scroll position
+        window.addEventListener('load', () => {
+            const activeItem = document.querySelector('.active-wheel-item');
+            if (activeItem) {
+                const scrollLeft = activeItem.offsetLeft - (wheel.offsetWidth / 2) + (activeItem.offsetWidth / 2);
+                wheel.scrollTo({ left: scrollLeft, behavior: 'auto' });
+            }
+        });
+    </script>
+</body></html>

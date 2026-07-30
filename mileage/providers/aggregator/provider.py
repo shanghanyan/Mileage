@@ -98,6 +98,15 @@ class AggregatorProvider:
         self._program_zones = self._load_program_zones()
         self._airport_coords = self._load_airport_coords()
         self.targets: list[Target] = load_targets(self._sources_path)
+        # Drop offline-only fixtures (starnet etc.) when running live.
+        import os
+
+        if offline is None:
+            offline_mode = os.getenv("MILEAGE_OFFLINE", "") not in ("", "0", "false")
+        else:
+            offline_mode = offline
+        if not offline_mode:
+            self.targets = [t for t in self.targets if not t.offline_only]
         if health_repo is not None:
             apply_persisted_health(self.targets, health_repo)
         # impersonate=True wires the curl_cffi (TLS/JA4) fallback for header/TLS
