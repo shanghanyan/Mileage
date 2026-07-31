@@ -13,6 +13,11 @@ Optional env:
     BETA_DAILY_LIMIT=3     — only first N routes (smoke)
     BETA_DAILY_SKIP_BONUS=1 — skip ``refresh-bonuses`` network call
     BETA_DAILY_OFFLINE=1   — force offline fixtures (fast, hermetic)
+
+Redis wipe status is recorded every run, not just printed: each day's
+``.jsonl`` gets a leading ``{"type": "run_meta", ...}`` line and each day's
+``.md`` gets a "Redis wipe" banner, so a stale/unwiped cache is visible in
+the log itself (not just console output that scrolls away).
 """
 
 from __future__ import annotations
@@ -130,6 +135,62 @@ def wipe_redis_mileage_cache(redis_url: str) -> int:
     return deleted
 
 
+def _check_and_wipe_redis(cfg: Any, stores: Any, registry: Any) -> dict[str, Any]:
+    """Attempt the redis wipe and return a status block that always says
+    plainly whether the cache was actually cleared before this run.
+
+    Status values:
+        "wiped"                — wipe ran, no error (0 deleted still counts as wiped)
+        "error"                — wipe was attempted but raised
+        "not_applicable"       — cache backend isn't redis; nothing to wipe
+        "skipped_misconfigured" — backend IS redis but no redis_url was found,
+                                   so the wipe could not run — this is the
+                                   "not wiped beforehand" case worth flagging
+    """
+    redis_url = cfg.redis_url or os.environ.get("MILEAGE_REDIS_URL")
+    backend = stores.backend
+
+    status: dict[str, Any] = {
+        "redis_backend": backend,
+        "redis_url_configured": bool(redis_url),
+        "redis_keys_deleted": 0,
+        "redis_wiped": False,
+        "redis_wipe_status": None,
+        "redis_wipe_note": None,
+        "redis_wipe_error": None,
+        "redis_wipe_warning": False,
+    }
+
+    if backend != "redis":
+        status["redis_wipe_status"] = "not_applicable"
+        status["redis_wipe_note"] = f"cache backend is '{backend}', not redis — nothing to wipe"
+        return status
+
+    if not redis_url:
+        status["redis_wipe_status"] = "skipped_misconfigured"
+        status["redis_wipe_note"] = (
+            "cache backend is 'redis' but no MILEAGE_REDIS_URL/REDIS_URL was found — "
+            "wipe SKIPPED, this run may be reading a stale cache"
+        )
+        status["redis_wipe_warning"] = True
+        return status
+
+    try:
+        deleted = wipe_redis_mileage_cache(redis_url)
+        registry.cache.clear()
+        status["redis_keys_deleted"] = deleted
+        status["redis_wiped"] = True
+        status["redis_wipe_status"] = "wiped"
+        status["redis_wipe_note"] = f"wiped {deleted} key(s) before this run"
+    except Exception as exc:
+        status["redis_wipe_status"] = "error"
+        status["redis_wipe_error"] = str(exc)
+        status["redis_wipe_note"] = f"wipe FAILED ({exc}) — cache was NOT confirmed clear"
+        status["redis_wipe_warning"] = True
+
+    return status
+
+
 def _top3(payload: dict[str, Any]) -> list[dict[str, Any]]:
     opts = payload.get("options") or []
     out: list[dict[str, Any]] = []
@@ -156,6 +217,35 @@ def _log_paths(day: date) -> tuple[Path, Path]:
     return _LOG_DIR / f"{stem}.jsonl", _LOG_DIR / f"{stem}.md"
 
 
+def _append_run_banner(
+    jsonl_path: Path, md_path: Path, *, day: date, redis_status: dict[str, Any]
+) -> None:
+    """Stamp the start of THIS run into both logs, independent of whether the
+    day's file already existed. Guarantees the redis wipe status survives on
+    the record even if the day's file was created by an earlier run today."""
+    banner = {
+        "type": "run_meta",
+        "ts": datetime.now(timezone.utc).isoformat(),
+        **redis_status,
+    }
+    with jsonl_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(banner, ensure_ascii=False) + "\n")
+
+    is_new_file = not md_path.exists()
+    lines: list[str] = []
+    if is_new_file:
+        lines.append(f"# Beta daily sweep — {day.isoformat()}\n")
+        lines.append(f"Balance: **{BALANCE:,}** pts per route\n\n")
+    if redis_status["redis_wipe_warning"]:
+        lines.append(f"### ⚠️ Run @ {banner['ts']} — Redis NOT wiped: {redis_status['redis_wipe_note']}\n\n")
+    elif redis_status["redis_wipe_status"] == "wiped":
+        lines.append(f"### ✅ Run @ {banner['ts']} — Redis wiped: {redis_status['redis_wipe_note']}\n\n")
+    else:
+        lines.append(f"### Run @ {banner['ts']} — Redis: {redis_status['redis_wipe_note']}\n\n")
+    with md_path.open("a", encoding="utf-8") as fh:
+        fh.writelines(lines)
+
+
 def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
     """Wipe Redis (if configured), quote each route, append log lines."""
     _apply_live_env()
@@ -180,17 +270,13 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
         "offline": cfg.offline,
         "cache_backend": stores.backend,
         "routes": len(cases),
-        "redis_keys_deleted": 0,
         "bonus_refresh": None,
     }
 
-    redis_url = cfg.redis_url or os.environ.get("MILEAGE_REDIS_URL")
-    if redis_url and stores.backend == "redis":
-        try:
-            meta["redis_keys_deleted"] = wipe_redis_mileage_cache(redis_url)
-            registry.cache.clear()
-        except Exception as exc:
-            meta["redis_wipe_error"] = str(exc)
+    redis_status = _check_and_wipe_redis(cfg, stores, registry)
+    meta.update(redis_status)
+    if redis_status["redis_wipe_warning"]:
+        print(f"⚠️  {redis_status['redis_wipe_note']}", file=sys.stderr, flush=True)
 
     if os.environ.get("BETA_DAILY_SKIP_BONUS") != "1" and not cfg.offline:
         try:
@@ -202,6 +288,7 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
 
     today = date.today()
     jsonl_path, md_path = _log_paths(today)
+    _append_run_banner(jsonl_path, md_path, day=today, redis_status=redis_status)
     rows: list[dict[str, Any]] = []
 
     window_start = date.today()
@@ -247,13 +334,18 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
             "portal_cpp": payload.get("portal_cpp"),
             "top3": _top3(payload),
             "live_award_space": payload.get("live_award_space"),
+            # Carried on every row (not just the run banner) so a reader
+            # filtering/greping individual route lines still sees whether
+            # the cache was actually cold for this run.
+            "redis_wiped_before_run": redis_status["redis_wiped"],
+            "redis_wipe_warning": redis_status["redis_wipe_warning"],
         }
         rows.append(row)
 
         with jsonl_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-        _append_markdown_summary(md_path, row, header=(i == 1))
+        _append_markdown_summary(md_path, row, header=False)
 
         print(
             f"[{i:02d}/{len(cases)}] {route.key()} {case.currency} "
@@ -307,6 +399,17 @@ def test_beta_daily_routes_log() -> None:
 
     report = run_beta_daily_sweep()
     assert report["rows"], "no routes ran"
+
+    if report["meta"].get("redis_wipe_warning"):
+        # Logged, not failed — the month demo needs the paper trail even
+        # when the cache wasn't confirmed clear. The log itself (jsonl
+        # run_meta line + md banner) also carries this, so it's auditable
+        # after the fact, not just visible in this console output.
+        print(
+            f"\n⚠️  REDIS NOT WIPED before this run: {report['meta'].get('redis_wipe_note')}",
+            file=sys.stderr,
+        )
+
     errors = [r for r in report["rows"] if r.get("error")]
     # Log failures but do not fail the sweep — month demo needs the paper trail.
     if errors:
