@@ -78,34 +78,13 @@ export function isKnownAirport(input: string): boolean {
   return resolveAirport(input) !== null;
 }
 
-/** Routes with curated / cached fare coverage for honest quotes. */
-export const ROUTES_WITH_FARES = new Set([
-  "LAX-JFK-economy",
-  "JFK-LAX-economy",
-  "LAX-IST-business",
-  "IST-LAX-business",
-  "SFO-NRT-business",
-  "NRT-SFO-business",
-  "LAX-LHR-business",
-  "SJC-LAX-economy",
-  "LAX-SJC-economy",
-  "SFO-LAX-economy",
-  "LAX-SFO-economy",
-  "OAK-LAX-economy",
-  "LAX-OAK-economy",
-  "SAN-SFO-economy",
-  "SFO-SAN-economy",
-  "SJC-SAN-economy",
-  "SAN-SJC-economy",
-  "SFO-JFK-economy",
-  "JFK-SFO-economy",
-  "SEA-LAX-economy",
-  "LAX-SEA-economy",
-]);
-
-export function routeHasFare(origin: string, dest: string, cabin: string): boolean {
-  const o = resolveAirport(origin)?.code;
-  const d = resolveAirport(dest)?.code;
-  if (!o || !d) return false;
-  return ROUTES_WITH_FARES.has(`${o}-${d}-${cabin}`);
-}
+// REMOVED: ROUTES_WITH_FARES / routeHasFare.
+//
+// This was a hand-maintained copy of knowledge/fares.yaml living in the
+// frontend, used to grey out demo buttons for routes with no cash fare. Two
+// things were wrong with it. It drifted — the backend list grew and this one
+// didn't, so real routes looked unsupported. And more fundamentally, a missing
+// market fare no longer blocks anything: price paid comes from the fuel-charge
+// matrix, so every route returns a full ranked answer and only the
+// cents-per-point column goes missing. Gating the UI on fare coverage was the
+// same mistake the pipeline used to make, mirrored one layer up.

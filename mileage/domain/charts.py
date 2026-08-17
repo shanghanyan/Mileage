@@ -12,6 +12,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional
 
+from .geo import great_circle_miles
 from .models import Cabin, Route
 
 
@@ -57,19 +58,54 @@ def _bands_match(band_regions: list[str], a: str, b: str) -> bool:
     return sorted(x.lower() for x in band_regions) == sorted([a, b])
 
 
-def great_circle_miles(
-    a: tuple[float, float], b: tuple[float, float]
-) -> float:
-    """Great-circle distance in statute miles between two [lat, lon] points."""
-    lat1, lon1 = math.radians(a[0]), math.radians(a[1])
-    lat2, lon2 = math.radians(b[0]), math.radians(b[1])
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    h = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-    )
-    return 2 * 3958.7613 * math.asin(min(1.0, math.sqrt(h)))
+def _distance_only_bands(program_chart: dict) -> list[dict]:
+    """Bands priced purely by segment distance, with no region pair (§4.3).
+
+    This is the `distance_band` chart kind — BA/Avios and the rest of the Avios
+    family price a segment by how long it is, full stop. Modeling that as a
+    region matrix is what forced a single flat "North America ↔ North Asia"
+    number and erased the short-haul sweet spot the whole product opens with.
+    """
+    return [
+        b
+        for b in program_chart.get("bands", [])
+        if not b.get("regions") and not b.get("airports") and b.get("distance")
+    ]
+
+
+def _distance_band_hit(
+    program: str,
+    program_chart: dict,
+    route: Route,
+    cabin_key: str,
+    airport_coords: Optional[dict[str, tuple[float, float]]],
+) -> Optional[ChartHit]:
+    bands = _distance_only_bands(program_chart)
+    if not bands or not airport_coords:
+        return None
+    co = airport_coords.get(route.origin.upper())
+    cd = airport_coords.get(route.dest.upper())
+    if not (co and cd):
+        return None
+    gcm = great_circle_miles(co, cd)
+    for band in bands:
+        lo, hi = float(band["distance"][0]), float(band["distance"][1])
+        if not (lo <= gcm <= hi):
+            continue
+        raw = band.get("miles", {}).get(cabin_key)
+        if raw is None:
+            continue
+        miles = int(raw)
+        flags = [f"distance_band:{int(lo)}-{int(hi)}mi"]
+        if band.get("roundtrip", False):
+            miles = math.ceil(miles / 2)
+            flags.append("rt_to_ow_normalized")
+        if program_chart.get("scope") == "per_segment":
+            # §4.3: per-segment pricing. A one-stop itinerary is priced as two
+            # segments, so the single-segment number is a FLOOR, not the fare.
+            flags.append("per_segment_floor")
+        return ChartHit(program=program, miles=miles, flags=flags)
+    return None
 
 
 def lookup_award_miles(
@@ -105,6 +141,14 @@ def lookup_award_miles(
     d = route.dest.upper()
     route_airports = sorted([o, d])
 
+    if airport_coords is None:
+        # Callers used to have to remember to pass this, and curated.py didn't —
+        # so every distance-banded chart silently declined to resolve and the
+        # route just produced no options. Default to the shared reference table.
+        from .geo import airports as _airports
+
+        airport_coords = _airports().coord_map()
+
     # Exact per-airport bands (hub-based "destination table" charts) take
     # precedence: they carry the queried city's OWN price, so we never collapse a
     # region to one (often wrong) number when we have the specific O->D pair.
@@ -125,6 +169,12 @@ def lookup_award_miles(
             miles = math.ceil(miles / 2)
             flags.append("rt_to_ow_normalized")
         return ChartHit(program=program, miles=miles, flags=flags)
+
+    # Pure distance charts (§4.3 `distance_band`) resolve on geometry alone and
+    # need no region pair at all.
+    hit = _distance_band_hit(program, program_chart, route, cabin_key, airport_coords)
+    if hit is not None:
+        return hit
 
     r_o, r_d = route_region_tokens(
         program, route, region_map, program_zones=program_zones
@@ -182,12 +232,3 @@ def lookup_award_miles(
     return best
 
 
-def cabins_available(program_chart: dict) -> set[Cabin]:
-    out: set[Cabin] = set()
-    for band in program_chart.get("bands", []):
-        for c in band.get("miles", {}):
-            try:
-                out.add(Cabin(c))
-            except ValueError:
-                continue
-    return out

@@ -16,6 +16,7 @@ import argparse
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import Callable, Literal, Optional
 
 from .config import (
@@ -29,6 +30,7 @@ from .config import (
 )
 from .domain.models import (
     AwardQuote,
+    AwardSpace,
     Cabin,
     FareQuote,
     Layer,
@@ -39,6 +41,16 @@ from .domain.models import (
     VerdictLabel,
 )
 from . import obs
+from .domain.fuel import fuel_matrix
+from .domain.geo import airports
+from .knowledge_snapshot import snapshot_version
+from .domain.rank import MAX_RESULTS, partition_gated, rank_options
+from .domain.service import (
+    partner_rights,
+    reachable_programs_for_route,
+    service_map,
+    serving_carriers,
+)
 from .domain.verdict import conclude_winner
 from .graph.build import build_graph
 from .graph.optimize import rank_paths
@@ -53,6 +65,104 @@ from .verify.crosscheck import verify_award_quotes, verify_fare
 # Orchestration: query -> providers -> verify -> graph -> conclude (§3)
 # --------------------------------------------------------------------------- #
 PipelineStep = Literal["route", "gathering", "crosscheck", "redemptions"]
+
+
+def run_compile(
+    config: Config, *, strict: bool = False, write: bool = False, as_json: bool = False
+) -> int:
+    """§8 compile step. Integrity failures are a red build, not a comment."""
+    from .knowledge_snapshot import build_snapshot, write_snapshot
+
+    snapshot = build_snapshot(config.knowledge_dir)
+    stale = [i for i in snapshot.issues if i.kind == "staleness"]
+    blocking = snapshot.blocking
+
+    if as_json:
+        print(
+            json.dumps(
+                {
+                    "hash": snapshot.hash,
+                    "name": snapshot.name(),
+                    "stats": snapshot.stats,
+                    "blocking": [str(i) for i in blocking],
+                    "staleness": [str(i) for i in stale],
+                },
+                indent=2,
+            )
+        )
+    else:
+        print(f"snapshot {snapshot.name()}")
+        for key, val in sorted(snapshot.stats.items()):
+            print(f"  {key:18} {val:,}")
+        if blocking:
+            print(f"\n  {len(blocking)} INTEGRITY FAILURE(S):")
+            for issue in blocking:
+                print(f"    {issue}")
+        if stale:
+            print(f"\n  {len(stale)} stale record(s) (>{ '90' } days):")
+            for issue in stale[:20]:
+                print(f"    {issue}")
+            if len(stale) > 20:
+                print(f"    ... and {len(stale) - 20} more")
+        if not blocking and not stale:
+            print("\n  clean — referential integrity and freshness both pass")
+
+    if write:
+        out = write_snapshot(snapshot, Path(config.db_path).resolve().parent / "build")
+        print(f"\n  wrote {out}")
+
+    if blocking:
+        return 1
+    if strict and stale:
+        return 1
+    return 0
+
+
+def _card_choices() -> list[str]:
+    """Known card ids, or the legacy pair if cards.yaml is missing."""
+    from .domain.cards import cards as _cards
+
+    known = _cards().ids()
+    return known or ["venture", "venture_x"]
+
+
+def _expand_awards_by_carrier(vawards, carrier_hits, rights):
+    """One verified award → one redeem edge per bookable operating carrier.
+
+    A chart says "this program charges N miles for this route". It does not say
+    whose aircraft you end up on, and the cash you owe depends entirely on that
+    (§4.4). So each award fans out across the carriers that (a) fly the pair and
+    (b) the program is allowed to book.
+
+    An award that already names its carrier (live availability usually does) is
+    passed through untouched — a real answer beats a fan-out every time.
+    """
+    from dataclasses import replace
+
+    out = []
+    for a in vawards:
+        if a.operating_carrier:
+            out.append(a)
+            continue
+        allowed = rights.bookable(a.program)
+        matches = [h for h in carrier_hits if h.carrier.id in allowed]
+        if not matches:
+            # No carrier we know of flies this pair for this program. Keep the
+            # award with an unknown carrier rather than dropping it: our
+            # service table being thin is not evidence the flight doesn't exist.
+            out.append(replace(a, flags=sorted(set(a.flags) | {"carrier_unknown"})))
+            continue
+        for hit in matches:
+            out.append(
+                replace(
+                    a,
+                    operating_carrier=hit.carrier.id,
+                    carrier_name=hit.carrier.name,
+                    confidence=round(a.confidence * hit.confidence, 3),
+                    flags=sorted(set(a.flags) | set(hit.flags)),
+                )
+            )
+    return out
 
 
 def run_quote(
@@ -136,11 +246,38 @@ def run_quote(
             ]
             obs.set_output(s, f"{len(fare_quotes)} fare quote(s)")
 
+        # SERVICE FILTER then PARTNER FILTER (§5.1), before any traversal.
+        # Running these first is the entire point of Table 3: they collapse the
+        # candidate program set to the handful that can actually fly and book
+        # this pair, which is what keeps 3-hop search affordable.
+        smap = service_map(config.knowledge_dir)
+        rights = partner_rights(config.knowledge_dir)
+        atable = airports(config.knowledge_dir)
+        carrier_hits = serving_carriers(route, smap=smap, table=atable)
+        bookable_programs = reachable_programs_for_route(
+            route, smap=smap, rights=rights, table=atable
+        )
+        with obs.span("filter:service", obs.KIND_CHAIN, input_value=route.key()) as s:
+            obs.set_output(
+                s,
+                f"{len(carrier_hits)} carrier(s) serve this pair -> "
+                f"{len(bookable_programs)} bookable program(s)",
+            )
+
         all_ratios: list[TransferRatio] = []
         award_quotes: list[AwardQuote] = []
         live_total = 0
+        award_provider_ran = False
         for cur in wallet:
             programs = reachable_award_programs(config, cur)
+            # Keep only programs with a viable redeem edge on this route. When
+            # the service map has no opinion (unknown airport), keep everything
+            # rather than silently returning nothing — an empty result must
+            # never be manufactured by a gap in our own reference data.
+            if bookable_programs:
+                pruned = [p for p in programs if p in bookable_programs]
+                if pruned:
+                    programs = pruned
             with obs.span(
                 "gather:charts", obs.KIND_CHAIN, input_value=f"{route.key()}:{cur}"
             ) as s:
@@ -181,7 +318,16 @@ def run_quote(
                     if isinstance(q, AwardQuote)
                 ]
                 live_total += len(live)
-                obs.set_output(s, f"{len(live)} live award quote(s) ({cur})")
+                # Did a live-availability source actually complete a lookup?
+                # Only that distinguishes "checked, no seats" from "never
+                # checked" — see ProviderRegistry.layer_was_queried.
+                if registry.layer_was_queried(Layer.AWARD):
+                    award_provider_ran = True
+                obs.set_output(
+                    s,
+                    f"{len(live)} live award quote(s) ({cur}); "
+                    f"space_checked={award_provider_ran}",
+                )
             award_quotes.extend(live)
 
         if on_step:
@@ -189,7 +335,9 @@ def run_quote(
 
         with obs.span("verify", obs.KIND_CHAIN) as s:
             vfare = verify_fare(fare_quotes)
-            vawards = verify_award_quotes(award_quotes)
+            vawards = verify_award_quotes(
+                award_quotes, space_checked=award_provider_ran
+            )
             obs.set_output(
                 s,
                 f"fare={'ok' if vfare else 'none'}, "
@@ -199,27 +347,33 @@ def run_quote(
         if on_step:
             on_step("redemptions")
 
-        if vfare is None:
-            obs.set_output(chain, "no_fare (no verified price-to-beat)")
-            return {
-                "route": route,
-                "verdict": None,
-                "error": "no_fare",
-                "message": (
-                    "No verified cash fare (price-to-beat) found for this route. "
-                    "Configure AMADEUS_CLIENT_ID/SECRET or add it to "
-                    "knowledge/fares.yaml. Cannot compute cents-per-point honestly."
-                ),
-            }
+        # A missing market fare DEGRADES the result; it never discards it.
+        #
+        # This used to return `error: no_fare` — after running the full graph
+        # search. The ranking existed and was thrown away, on 7 of 20 swept
+        # routes, every day for twelve days, including every long-haul the
+        # product is for. Price paid comes from our own tables (§4.4), so
+        # points and dollars are still answerable without any fare feed; only
+        # cents-per-point, which is defined against a fare, goes missing.
+        fare_cents = vfare.cash_cents if vfare else 0
+        fare_conf = vfare.confidence if vfare else 1.0
+        fare_flag_list = list(vfare.flags) if vfare else ["no_market_fare"]
+        degraded = vfare is None
 
         alliances, program_transfers = load_alliance_data(config)
-        from .domain.surcharges import load_surcharges
         from .providers.bonus_calendar import load_bonus_calendar, recent_expired_partners
 
-        surcharges = load_surcharges(config.knowledge_dir / "surcharges.yaml")
         bonus_offers = load_bonus_calendar(
             config.knowledge_dir / "bonus_calendar.yaml"
         )
+        matrix = fuel_matrix(config.knowledge_dir)
+
+        # Fan each verified award out over the carriers that both fly this pair
+        # and are bookable with that program. This is the REDEEM edge of §3, and
+        # it is per-CARRIER on purpose: Avios-on-JAL and Avios-on-BA are the same
+        # chart and wildly different prices, so collapsing them to one row is
+        # how a system confidently recommends the worse redemption.
+        expanded = _expand_awards_by_carrier(vawards, carrier_hits, rights)
 
         with obs.span("optimize", obs.KIND_CHAIN) as s:
             merged: list = []
@@ -229,32 +383,49 @@ def run_quote(
                 graph = build_graph(
                     cur,
                     ratios,
-                    vawards,
+                    expanded,
                     program_transfers=program_transfers,
                     alliances=alliances,
                 )
                 opts = rank_paths(
                     graph,
                     cur,
-                    vfare.cash_cents,
+                    fare_cents,
+                    route=route,
                     portal_cpp=user.portal_cpp(cur),
                     balance=user.balances.get(cur, 0),
-                    fare_confidence=vfare.confidence,
-                    fare_flags=vfare.flags,
-                    surcharges=surcharges,
+                    fare_confidence=fare_conf,
+                    fare_flags=fare_flag_list,
+                    matrix=matrix,
+                    table=atable,
                 )
                 for o in opts:
                     if o.kind == "portal" and portal is None and cur == primary:
                         portal = o
                     merged.append(o)
 
-            # Deduplicate identical transfer labels keeping highest cpp.
-            by_label: dict[str, object] = {}
-            for o in merged:
-                prev = by_label.get(o.label)
-                if prev is None or o.cpp > prev.cpp:  # type: ignore[attr-defined]
-                    by_label[o.label] = o
-            options = sorted(by_label.values(), key=lambda o: o.cpp, reverse=True)
+            balances = {c: user.balances.get(c, 0) for c in wallet}
+            held_cards = frozenset({user.card})
+
+            # §6.3 — gated routes are NEVER hidden. They come back separately so
+            # the UI can say "3 routes require a Sapphire card ›" instead of
+            # quietly shrinking the list.
+            open_rows, gated_rows = partition_gated(merged, held_cards=held_cards)
+
+            # Rank once without a cap, then take the top slice. Keeping the
+            # full list lets the result report how many options were considered
+            # versus shown — a silent truncation reads as "that's everything"
+            # when it isn't.
+            ranked_all = rank_options(
+                open_rows, balance_by_currency=balances, limit=10_000
+            )
+            options = ranked_all[:MAX_RESULTS]
+            gated = rank_options(
+                gated_rows,
+                balance_by_currency=balances,
+                drop_unaffordable=False,
+                limit=MAX_RESULTS,
+            )
             transfers = [o for o in options if o.kind == "transfer"]
             if portal is None:
                 portal = next((o for o in options if o.kind == "portal"), None)
@@ -271,14 +442,21 @@ def run_quote(
                 transfers,
                 preferences=user.preferences,
                 recent_bonus_programs=list(dict.fromkeys(recent)),
+                degraded=degraded,
+                ranked_options=options,
             )
+            verdict.gated = gated
             obs.set_output(s, f"{verdict.label.value} ({len(options)} options)")
 
         bt = verdict.best_transfer
         obs.set_output(
             chain,
             f"{verdict.label.value}"
-            + (f" · {bt.label} @ {bt.cpp:.2f}c/pt" if bt else " · portal floor"),
+            + (
+                f" · {bt.label} · {bt.source_points:,} pts · ${bt.price_paid_usd:,.0f}"
+                if bt
+                else " · portal floor"
+            ),
         )
     finally:
         chain_cm.__exit__(None, None, None)
@@ -301,7 +479,7 @@ def run_quote(
                 "verdict": verdict.label.value,
                 "currency": currency,
                 "miles_held": balance,
-                "fare_cents": vfare.cash_cents,
+                "fare_cents": fare_cents,
             }
         )
 
@@ -309,6 +487,22 @@ def run_quote(
         "route": route,
         "verdict": verdict,
         "fare": vfare,
+        "degraded": degraded,
+        "space_checked": award_provider_ran,
+        "carriers": [h.carrier.id for h in carrier_hits],
+        # Why each layer produced what it did. Without this, "0 options" is
+        # ambiguous between "no such route exists" and "our fetcher was rate
+        # limited" — and only one of those is a fact about flights.
+        "coverage": {
+            layer.value: registry.layer_diagnostics(layer)
+            for layer in (Layer.FARES, Layer.CHARTS, Layer.AWARD)
+        },
+        # §6.1 returns at most 10. Say so, and say how many were dropped, so a
+        # capped list is never mistaken for an exhaustive one.
+        "options_considered": len(ranked_all),
+        "options_shown": len(options),
+        "ranked_all": ranked_all,
+        "snapshot": snapshot_version(config.knowledge_dir),
         "awards": vawards,
         "user": user,
         "currency": currency,
@@ -335,46 +529,88 @@ def render(result: dict) -> str:
     fare = result["fare"]
     user: User = result["user"]
     lines: list[str] = []
-    lines.append("=" * 68)
+    lines.append("=" * 78)
     lines.append(
         f"  {route.origin} -> {route.dest}  ·  {route.cabin.value}  ·  "
         f"{user.balances.get(result['currency'], 0):,} {result['currency']} "
         f"({user.card})"
     )
-    lines.append("=" * 68)
-    lines.append(f"  Price to beat: ${fare.cash_cents / 100:,.0f} "
-                 f"[{', '.join(fare.flags) or 'live'}] "
-                 f"conf={fare.confidence:.2f}")
-    awards = result.get("awards") or []
-    live = [a for a in awards if a.seats_available is not None]
-    if live:
-        seat_bits = ", ".join(
-            f"{a.program} {a.miles:,}mi ({a.seats_available} seats)" for a in live
+    lines.append("=" * 78)
+
+    if fare is not None:
+        lines.append(
+            f"  Market fare: ${fare.cash_cents / 100:,.0f} "
+            f"[{', '.join(fare.flags) or 'live'}] conf={fare.confidence:.2f}"
         )
-        lines.append(f"  Live award space: {seat_bits}")
+    else:
+        lines.append(
+            "  Market fare: none on file — cents-per-point is omitted. Points "
+            "and price paid below are unaffected."
+        )
+
+    # Availability, in the three states it actually has.
+    awards = result.get("awards") or []
+    confirmed = [a for a in awards if a.space is AwardSpace.CONFIRMED]
+    if confirmed:
+        lines.append(
+            "  Award space: "
+            + ", ".join(
+                f"{a.program} {a.miles:,}mi ({a.seats_available} seats)"
+                for a in confirmed
+            )
+        )
+    elif not result.get("space_checked"):
+        lines.append(
+            "  Award space: NOT CHECKED — no live availability source ran for "
+            "this route. This is not a report that seats are unavailable."
+        )
     elif awards:
-        lines.append(f"  Award space: chart-only (no live seat) — {len(awards)} program(s)")
+        lines.append(
+            f"  Award space: checked, none found across {len(awards)} program(s)"
+        )
+
     lines.append("")
     lines.append(f"  VERDICT: {verdict.label.value}  —  {_LABEL_BLURB[verdict.label]}")
     lines.append(f"  {verdict.rationale}")
+    if verdict.reason:
+        lines.append(f"  why: {verdict.reason}")
     if verdict.flags:
         lines.append(f"  flags: {', '.join(verdict.flags)}")
     lines.append("")
-    lines.append("  Ranked redemptions (cents per point):")
-    lines.append("  " + "-" * 64)
+
+    # §6.2 — price paid leads. It is the cash actually leaving your pocket.
+    lines.append("  Ranked redemptions — points and cash you actually pay:")
+    lines.append("  " + "-" * 74)
     for o in verdict.options:
         marker = "*" if (verdict.best_transfer and o is verdict.best_transfer) else " "
         if o.kind == "portal":
             marker = "#" if verdict.label == VerdictLabel.PORTAL_ONLY else marker
-        afford = "" if o.affordable else "  (need more points)"
+        cpp = f"{o.cpp:5.2f}c/pt" if o.cpp is not None else "    --   "
+        afford = "  (need more points)" if not o.affordable else ""
         lines.append(
-            f"  {marker} {o.cpp:5.2f}c/pt  {o.label:<28} "
-            f"{o.source_points:>7,} pts  conf={o.confidence:.2f}{afford}"
+            f"  {marker} {o.source_points:>8,} pts  ${o.price_paid_usd:>7,.0f}  "
+            f"{cpp}  {o.label[:40]:<40}{afford}"
         )
-        if o.flags:
-            lines.append(f"        flags: {', '.join(o.flags)}")
-    lines.append("  " + "-" * 64)
+        if o.reason:
+            lines.append(f"        {o.reason}")
+    lines.append("  " + "-" * 74)
     lines.append("  (* best affordable transfer   # portal floor wins)")
+
+    # §6.3 — gated routes are surfaced, never dropped.
+    gated = list(verdict.gated)
+    if gated:
+        lines.append("")
+        from .serialize import _gated_summary
+
+        for entry in _gated_summary(gated):
+            lines.append(
+                f"  {entry['routes']} route(s) {entry['requirement']}  ›"
+            )
+        for o in gated[:5]:
+            lines.append(
+                f"      {o.source_points:>8,} pts  ${o.price_paid_usd:>7,.0f}  "
+                f"{o.label[:44]}"
+            )
     return "\n".join(lines)
 
 
@@ -974,7 +1210,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     q.add_argument("--currency", default=DEFAULT_CURRENCY)
     q.add_argument("--miles", type=int, required=True)
-    q.add_argument("--card", default="venture_x", choices=["venture", "venture_x"])
+    # Card ids come from knowledge/cards.yaml, not a hard-coded pair. The old
+    # two-value choice list was a Capital-One-era leftover that made every
+    # non-Cap-One wallet unreachable from the CLI — including the Chase wallet
+    # the architecture's own §11 demo is written in.
+    q.add_argument(
+        "--card",
+        default="venture_x",
+        choices=_card_choices(),
+        metavar="CARD",
+    )
     q.add_argument("--json", action="store_true", help="machine-readable output")
 
     sub.add_parser("demo", help="run Demo A and Demo B side by side")
@@ -1037,6 +1282,19 @@ def build_parser() -> argparse.ArgumentParser:
         "(space / bonus / verdict)",
     )
     cw.add_argument("--user", default=None, help="limit to one user_id")
+
+    cp = sub.add_parser(
+        "compile",
+        help="§8: validate Tables 1+3 (referential integrity + staleness) and "
+        "emit a hashed snapshot. Exits non-zero on any integrity failure.",
+    )
+    cp.add_argument(
+        "--strict",
+        action="store_true",
+        help="also fail on staleness (verifiedAt older than the 90-day window)",
+    )
+    cp.add_argument("--write", action="store_true", help="write build/<name>.json")
+    cp.add_argument("--json", action="store_true", help="machine-readable output")
 
     p = sub.add_parser("providers", help="provider federation status + quota")
     p.add_argument("--json", action="store_true")
@@ -1101,6 +1359,14 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.command == "demo-multiuser":
             return run_demo_multiuser(registry, repo, config)
+
+        if args.command == "compile":
+            return run_compile(
+                config,
+                strict=getattr(args, "strict", False),
+                write=getattr(args, "write", False),
+                as_json=getattr(args, "json", False),
+            )
 
         if args.command == "eval":
             return run_eval(config)

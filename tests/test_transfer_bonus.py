@@ -22,6 +22,7 @@ from mileage.providers.curated import CuratedProvider, _partner_entries
 from mileage.verify.crosscheck import VerifiedAward
 
 _KNOWLEDGE = Path(__file__).resolve().parents[1] / "mileage" / "knowledge"
+_FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 def test_effective_ratio_property() -> None:
@@ -69,10 +70,17 @@ def test_partner_entries_skips_expired_bonus() -> None:
 
 
 def test_curated_loads_eva_bonus_from_calendar() -> None:
-    """EVA +30% comes from scraped bonus_calendar.yaml, not ratios.yaml."""
+    """EVA +30% comes from the bonus calendar (Table 2), not ratios.yaml.
+
+    Pinned to a fixture calendar: the live file is scraper-owned, so asserting
+    a named promo against it fails on expiry rather than on a real regression.
+    """
     from mileage.domain.models import Layer
 
-    provider = CuratedProvider(as_of=date(2026, 7, 20))
+    provider = CuratedProvider(
+        as_of=date(2026, 7, 20),
+        bonus_calendar_path=_FIXTURES / "bonus_calendar_pinned.yaml",
+    )
     ratios = [
         q
         for q in provider.fetch(Query(Route("LAX", "TPE", Cabin.BUSINESS), Layer.CHARTS))

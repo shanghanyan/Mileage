@@ -1,0 +1,426 @@
+# Table 3 — SERVICE. Which carrier actually flies which city pair.
+#
+# ARCHITECTURE §2 sketches this as one file per carrier listing explicit
+# {from, to, cabins} pairs. That shape does not survive contact with reality:
+# ~50 carriers × a few thousand city pairs is tens of thousands of hand-entered
+# rows that rot the moment a season changes, and nobody re-verifies them.
+#
+# Instead each carrier is described by what actually determines its network:
+#   hubs   — the airports it builds its network around
+#   serves — the regions it flies to FROM those hubs
+#   routes — explicit pairs that the hub rule would miss or get wrong
+#
+# A carrier serves O↔D when either endpoint is one of its hubs and the other
+# endpoint sits in a region it serves (or the pair is listed explicitly).
+#
+# HONESTY: a hub-rule match is an INFERENCE, not a verified schedule. Those
+# edges carry the `service_inferred` flag and reduced confidence; explicit
+# `routes` entries carry `service_verified`. The engine never presents an
+# inferred edge as a confirmed schedule — see domain/service.py.
+#
+# This is Table 3: version-controlled, human-reviewed. Scrapers never write it.
+
+version: 1
+updated_at: '2026-08-13'
+
+# Cabins a carrier offers on intra-region flying, when it differs from its
+# long-haul product. Almost nobody flies a true first-class cabin domestically.
+default_intra_cabins: [economy, business]
+
+carriers:
+  # ------------------------------------------------------------------ oneworld
+  JAL:
+    name: Japan Airlines
+    program: japan_airlines
+    alliance: oneworld
+    hubs: [HND, NRT, KIX, ITM]
+    serves: [north_asia, southeast_asia, north_america, europe, oceania, south_asia]
+    cabins: [economy, premium_economy, business, first]
+    routes:
+      # The canonical short-haul Avios sweet spot (ARCHITECTURE §11 demo).
+      - { from: HND, to: ITM, cabins: [economy, business] }
+      - { from: HND, to: CTS, cabins: [economy, business] }
+      - { from: HND, to: FUK, cabins: [economy, business] }
+      - { from: HND, to: OKA, cabins: [economy, business] }
+      - { from: NRT, to: KIX, cabins: [economy, business] }
+
+  BA:
+    name: British Airways
+    program: avios
+    alliance: oneworld
+    hubs: [LHR, LGW, LCY]
+    serves: [europe, north_america, north_asia, southeast_asia, south_asia,
+             middle_east, africa, south_america, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  IB:
+    name: Iberia
+    program: iberia_plus
+    alliance: oneworld
+    hubs: [MAD, BCN]
+    serves: [europe, north_america, south_america, africa, middle_east]
+    cabins: [economy, premium_economy, business]
+
+  EI:
+    name: Aer Lingus
+    program: aer_lingus_aerclub
+    alliance: oneworld          # value-partner for Avios purposes
+    hubs: [DUB, MAN]
+    serves: [europe, north_america]
+    cabins: [economy, business]
+
+  AA:
+    name: American Airlines
+    program: american
+    alliance: oneworld
+    hubs: [DFW, CLT, ORD, MIA, PHL, PHX, LAX, JFK, DCA]
+    serves: [north_america, europe, south_america, north_asia, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  AS:
+    name: Alaska Airlines
+    program: alaska
+    alliance: oneworld
+    hubs: [SEA, PDX, ANC, SFO, LAX, SAN]
+    serves: [north_america]
+    cabins: [economy, business]
+
+  CX:
+    name: Cathay Pacific
+    program: cathay_pacific
+    alliance: oneworld
+    hubs: [HKG]
+    serves: [north_asia, southeast_asia, south_asia, north_america, europe,
+             oceania, middle_east, africa]
+    cabins: [economy, premium_economy, business, first]
+
+  QR:
+    name: Qatar Airways
+    program: qatar
+    alliance: oneworld
+    hubs: [DOH]
+    serves: [middle_east, europe, north_america, africa, south_asia,
+             southeast_asia, north_asia, oceania, south_america]
+    cabins: [economy, business, first]
+
+  QF:
+    name: Qantas
+    program: qantas
+    alliance: oneworld
+    hubs: [SYD, MEL, BNE, PER]
+    serves: [oceania, north_america, europe, southeast_asia, north_asia,
+             south_asia, africa]
+    cabins: [economy, premium_economy, business, first]
+
+  AY:
+    name: Finnair
+    program: finnair
+    alliance: oneworld
+    hubs: [HEL]
+    serves: [europe, north_asia, north_america, south_asia, southeast_asia,
+             middle_east]
+    cabins: [economy, premium_economy, business]
+
+  MH:
+    name: Malaysia Airlines
+    program: malaysia
+    alliance: oneworld
+    hubs: [KUL]
+    serves: [southeast_asia, north_asia, south_asia, oceania, middle_east, europe]
+    cabins: [economy, business, first]
+
+  # -------------------------------------------------------------- Star Alliance
+  UA:
+    name: United Airlines
+    program: united
+    alliance: star_alliance
+    hubs: [ORD, EWR, IAH, DEN, SFO, LAX, IAD, GUM]
+    serves: [north_america, europe, north_asia, southeast_asia, south_asia,
+             oceania, south_america, middle_east, africa]
+    cabins: [economy, premium_economy, business]
+
+  AC:
+    name: Air Canada
+    program: aeroplan
+    alliance: star_alliance
+    hubs: [YYZ, YVR, YUL, YYC]
+    serves: [north_america, europe, north_asia, southeast_asia, south_asia,
+             oceania, south_america, middle_east, africa]
+    cabins: [economy, premium_economy, business]
+
+  LH:
+    name: Lufthansa
+    program: lufthansa
+    alliance: star_alliance
+    hubs: [FRA, MUC]
+    serves: [europe, north_america, north_asia, southeast_asia, south_asia,
+             middle_east, africa, south_america, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  LX:
+    name: SWISS
+    program: swiss
+    alliance: star_alliance
+    hubs: [ZRH, GVA]
+    serves: [europe, north_america, north_asia, southeast_asia, south_asia,
+             middle_east, africa, south_america]
+    cabins: [economy, premium_economy, business, first]
+
+  OS:
+    name: Austrian Airlines
+    program: lufthansa
+    alliance: star_alliance
+    hubs: [VIE]
+    serves: [europe, north_america, north_asia, middle_east, south_asia]
+    cabins: [economy, premium_economy, business]
+
+  TK:
+    name: Turkish Airlines
+    program: turkish
+    alliance: star_alliance
+    hubs: [IST, SAW]
+    serves: [europe, middle_east, north_america, africa, south_asia,
+             southeast_asia, north_asia, south_america]
+    cabins: [economy, business]
+
+  SQ:
+    name: Singapore Airlines
+    program: krisflyer
+    alliance: star_alliance
+    hubs: [SIN]
+    serves: [southeast_asia, north_asia, south_asia, oceania, europe,
+             north_america, middle_east, africa]
+    cabins: [economy, premium_economy, business, first]
+
+  NH:
+    name: ANA
+    program: ana
+    alliance: star_alliance
+    hubs: [HND, NRT]
+    serves: [north_asia, southeast_asia, north_america, europe, south_asia, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  OZ:
+    name: Asiana Airlines
+    program: asiana
+    alliance: star_alliance
+    hubs: [ICN, GMP]
+    serves: [north_asia, southeast_asia, north_america, europe, oceania]
+    cabins: [economy, business, first]
+
+  BR:
+    name: EVA Air
+    program: eva
+    alliance: star_alliance
+    hubs: [TPE]
+    serves: [north_asia, southeast_asia, north_america, europe, oceania, south_asia]
+    cabins: [economy, premium_economy, business]
+
+  TG:
+    name: Thai Airways
+    program: thai
+    alliance: star_alliance
+    hubs: [BKK]
+    serves: [southeast_asia, north_asia, south_asia, oceania, europe, middle_east]
+    cabins: [economy, business, first]
+
+  AV:
+    name: Avianca
+    program: lifemiles
+    alliance: star_alliance
+    hubs: [BOG, SAL, MDE]
+    serves: [south_america, north_america, europe]
+    cabins: [economy, business]
+
+  CM:
+    name: Copa Airlines
+    program: copa
+    alliance: star_alliance
+    hubs: [PTY]
+    serves: [north_america, south_america]
+    cabins: [economy, business]
+
+  SK:
+    name: SAS
+    program: sas
+    alliance: star_alliance
+    hubs: [CPH, ARN, OSL]
+    serves: [europe, north_america, north_asia]
+    cabins: [economy, premium_economy, business]
+
+  TP:
+    name: TAP Air Portugal
+    program: tap
+    alliance: star_alliance
+    hubs: [LIS, OPO]
+    serves: [europe, north_america, south_america, africa]
+    cabins: [economy, business]
+
+  ET:
+    name: Ethiopian Airlines
+    program: ethiopian
+    alliance: star_alliance
+    hubs: [ADD]
+    serves: [africa, europe, middle_east, north_america, south_asia,
+             southeast_asia, north_asia]
+    cabins: [economy, business]
+
+  MS:
+    name: EgyptAir
+    program: egyptair
+    alliance: star_alliance
+    hubs: [CAI]
+    serves: [africa, europe, middle_east, north_america, south_asia, north_asia]
+    cabins: [economy, business]
+
+  NZ:
+    name: Air New Zealand
+    program: air_new_zealand
+    alliance: star_alliance
+    hubs: [AKL, CHC, WLG]
+    serves: [oceania, north_america, north_asia, southeast_asia]
+    cabins: [economy, premium_economy, business]
+
+  AI:
+    name: Air India
+    program: air_india
+    alliance: star_alliance
+    hubs: [DEL, BOM]
+    serves: [south_asia, europe, north_america, middle_east, southeast_asia,
+             north_asia, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  CA:
+    name: Air China
+    program: air_china
+    alliance: star_alliance
+    hubs: [PEK, PKX, CTU]
+    serves: [north_asia, europe, north_america, southeast_asia, oceania, middle_east]
+    cabins: [economy, premium_economy, business, first]
+
+  # -------------------------------------------------------------------- SkyTeam
+  DL:
+    name: Delta Air Lines
+    program: delta
+    alliance: skyteam
+    hubs: [ATL, DTW, MSP, JFK, LAX, SEA, SLC, BOS, LGA]
+    serves: [north_america, europe, north_asia, south_america, africa,
+             middle_east, southeast_asia]
+    cabins: [economy, premium_economy, business]
+
+  AF:
+    name: Air France
+    program: flying_blue
+    alliance: skyteam
+    hubs: [CDG, ORY]
+    serves: [europe, north_america, africa, north_asia, southeast_asia,
+             south_asia, middle_east, south_america, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  KL:
+    name: KLM
+    program: flying_blue
+    alliance: skyteam
+    hubs: [AMS]
+    serves: [europe, north_america, africa, north_asia, southeast_asia,
+             south_asia, middle_east, south_america]
+    cabins: [economy, premium_economy, business]
+
+  VS:
+    name: Virgin Atlantic
+    program: virgin_atlantic
+    alliance: skyteam
+    hubs: [LHR, LGW, MAN]
+    serves: [europe, north_america, africa, south_asia, north_asia]
+    cabins: [economy, premium_economy, business]
+
+  KE:
+    name: Korean Air
+    program: korean
+    alliance: skyteam
+    hubs: [ICN]
+    serves: [north_asia, southeast_asia, north_america, europe, oceania, south_asia]
+    cabins: [economy, business, first]
+
+  CI:
+    name: China Airlines
+    program: china_airlines
+    alliance: skyteam
+    hubs: [TPE]
+    serves: [north_asia, southeast_asia, north_america, oceania, europe]
+    cabins: [economy, premium_economy, business]
+
+  MU:
+    name: China Eastern
+    program: china_eastern
+    alliance: skyteam
+    hubs: [PVG, SHA, KMG]
+    serves: [north_asia, southeast_asia, north_america, europe, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  AM:
+    name: Aeromexico
+    program: aeromexico
+    alliance: skyteam
+    hubs: [MEX, GDL, MTY]
+    serves: [north_america, south_america, europe, north_asia]
+    cabins: [economy, premium_economy, business]
+
+  VN:
+    name: Vietnam Airlines
+    program: vietnam
+    alliance: skyteam
+    hubs: [SGN, HAN]
+    serves: [southeast_asia, north_asia, europe, oceania, north_america]
+    cabins: [economy, premium_economy, business]
+
+  SV:
+    name: Saudia
+    program: saudi
+    alliance: skyteam
+    hubs: [JED, RUH, DMM]
+    serves: [middle_east, europe, africa, south_asia, southeast_asia, north_asia]
+    cabins: [economy, business, first]
+
+  KQ:
+    name: Kenya Airways
+    program: kenya
+    alliance: skyteam
+    hubs: [NBO]
+    serves: [africa, europe, middle_east, south_asia, southeast_asia]
+    cabins: [economy, business]
+
+  # ---------------------------------------------------------------- independent
+  EK:
+    name: Emirates
+    program: emirates
+    alliance: independent
+    hubs: [DXB]
+    serves: [middle_east, europe, north_america, africa, south_asia,
+             southeast_asia, north_asia, oceania, south_america]
+    cabins: [economy, premium_economy, business, first]
+
+  EY:
+    name: Etihad Airways
+    program: etihad
+    alliance: independent
+    hubs: [AUH]
+    serves: [middle_east, europe, north_america, africa, south_asia,
+             southeast_asia, north_asia, oceania]
+    cabins: [economy, premium_economy, business, first]
+
+  B6:
+    name: JetBlue
+    program: jetblue
+    alliance: independent
+    hubs: [JFK, BOS, FLL, LGA, EWR, SJU]
+    serves: [north_america, europe]
+    cabins: [economy, business]
+
+  WN:
+    name: Southwest Airlines
+    program: southwest
+    alliance: independent
+    hubs: [MDW, LAS, DEN, BWI, PHX, DAL, HOU, OAK]
+    serves: [north_america]
+    cabins: [economy]

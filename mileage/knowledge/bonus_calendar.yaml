@@ -1,8 +1,16 @@
 source: Roame transfer-bonus calendar (JSON-LD)
 url: https://roame.travel/guides/points-transfer-bonuses
-fetched_at: '2026-08-09T23:28:41.275589+00:00'
+fetched_at: '2026-08-17T00:40:11.411934+00:00'
 trust: 0.85
 offers:
+- from_currency: chase_ur
+  to_program: aeroplan
+  bonus_multiplier: 1.2
+  valid_from: '2026-08-12'
+  valid_until: '2026-09-30'
+  label: +20% Aeroplan transfer bonus
+  status: active
+  raw_name: 20% transfer bonus from Chase Ultimate Rewards to Air Canada Aeroplan
 - from_currency: amex_mr
   to_program: iberia_plus
   bonus_multiplier: 1.3

@@ -2,16 +2,13 @@ import { FormEvent, useCallback, useEffect, useMemo, useState, type ReactNode } 
 import AirportInput from "./AirportInput";
 import DisconnectedPage from "./DisconnectedPage";
 import LiveScrapePage from "./LiveScrapePage";
-import {
-  isKnownAirport,
-  resolveAirport,
-  routeHasFare,
-} from "./airports";
+import { isKnownAirport, resolveAirport } from "./airports";
 import {
   ApiConnectionError,
   checkHealth,
   formatCpp,
   formatDollars,
+  formatUsd,
   parseMiles,
   pollUntilComplete,
   startRedemption,
@@ -144,11 +141,6 @@ function matchesDemo(
     parseMiles(miles) === parseMiles(demo.miles) &&
     currency === demo.currency
   );
-}
-
-function isDemoEnabled(key: DemoKey): boolean {
-  const demo = DEMOS[key];
-  return routeHasFare(demo.origin, demo.dest, demo.cabin);
 }
 
 function ToggleSection({
@@ -306,7 +298,8 @@ export default function App() {
     ) {
       return result.best_transfer.cpp;
     }
-    return result.portal_cpp ?? 0;
+    // `?? 0` would turn "no fare, so no cents-per-point" into a confident 0.0¢.
+    return result.portal_cpp ?? null;
   }, [result]);
 
   const filteredOptions = useMemo(() => {
@@ -329,7 +322,6 @@ export default function App() {
   }
 
   function applyDemo(key: DemoKey) {
-    if (!isDemoEnabled(key)) return;
     const demo = DEMOS[key];
     setOrigin(demo.origin);
     setDest(demo.dest);
@@ -640,13 +632,12 @@ export default function App() {
               <div className="demo-row">
                 {(Object.keys(DEMOS) as DemoKey[]).map((key) => {
                   const selected = selectedDemo === key;
-                  const enabled = isDemoEnabled(key);
                   return (
                     <button
                       key={key}
                       type="button"
                       className={`demo-btn${selected ? " selected" : ""}`}
-                      disabled={loading || !enabled}
+                      disabled={loading}
                       onClick={() => applyDemo(key)}
                     >
                       {DEMOS[key].label}
@@ -727,15 +718,98 @@ export default function App() {
                             {opt.flags.includes("multi_hop") && (
                               <span className="flag-chip hop">multi-hop</span>
                             )}
+                            {/* Three states. `space_unknown` must never read as
+                                "no seats" — nothing checked. */}
+                            {opt.space === "space_confirmed" && (
+                              <span className="flag-chip">seats confirmed</span>
+                            )}
+                            {opt.space === "space_unknown" && (
+                              <span className="flag-chip">
+                                availability not checked
+                              </span>
+                            )}
                             {opt.flags.length
                               ? ` · ${opt.flags.filter((f) => !["transfer_bonus", "multi_hop"].includes(f)).join(", ")}`
                               : ""}
                           </div>
+                          {opt.reason && (
+                            <div className="meta">{opt.reason}</div>
+                          )}
                         </div>
-                        <div>{formatCpp(opt.cpp)}</div>
+                        {/* §6.2 — price paid leads: the cash actually leaving
+                            your pocket. cpp is a secondary line and is omitted
+                            entirely when no market fare existed. */}
+                        <div>
+                          {formatUsd(opt.price_paid_usd)}
+                          <small>
+                            {opt.cpp !== null && opt.cpp !== undefined
+                              ? formatCpp(opt.cpp)
+                              : "cpp n/a"}
+                          </small>
+                        </div>
                       </div>
                     );
                   })}
+                  {/* The list is capped at ten. Say so — a truncated list that
+                      looks exhaustive is its own kind of dishonesty. */}
+                  {result.options_considered != null &&
+                    result.options_shown != null &&
+                    result.options_considered > result.options_shown && (
+                      <div className="meta">
+                        Showing {result.options_shown} of{" "}
+                        {result.options_considered} bookable routes.
+                      </div>
+                    )}
+                </section>
+              )}
+
+              {/* §6.3 — gated routes are NEVER hidden. Knowing which card
+                  unlocks a trip you're actually trying to take is the useful
+                  part, and it only works if the route is visible. */}
+              {result.gated_summary && result.gated_summary.length > 0 && (
+                <section className="options" aria-label="Routes requiring a card">
+                  <h2>Routes you can&rsquo;t book yet</h2>
+                  {result.gated_summary.map((entry) => (
+                    <div key={entry.requirement} className="option-row">
+                      <div>
+                        <div>
+                          {entry.routes} route{entry.routes === 1 ? "" : "s"}{" "}
+                          {entry.requirement}
+                        </div>
+                        {entry.annual_fee_usd != null && (
+                          <div className="meta">
+                            ${entry.annual_fee_usd}/yr
+                            {entry.approval_days
+                              ? ` · ~${entry.approval_days} days to approve`
+                              : ""}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {(result.gated_options ?? []).slice(0, 5).map((opt) => (
+                    <div key={`gated-${opt.label}`} className="option-row">
+                      <div>
+                        <div>{opt.label}</div>
+                        <div className="meta">{opt.reason}</div>
+                      </div>
+                      <div>
+                        {formatUsd(opt.price_paid_usd)}
+                        <small>{opt.source_points.toLocaleString()} pts</small>
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              {/* A silent default that reads as a confirmed negative is the
+                  worst failure mode available here. Say when nothing looked. */}
+              {result.space_checked === false && (
+                <section className="options" aria-label="Availability">
+                  <div className="meta">
+                    Award availability was not checked for this route. That is
+                    not a report that seats are unavailable.
+                  </div>
                 </section>
               )}
             </>

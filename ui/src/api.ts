@@ -145,8 +145,18 @@ export function parseMiles(raw: string): number {
   return Number(raw.replace(/[^0-9]/g, "")) || 0;
 }
 
-export function formatCpp(cpp: number): string {
+/** `null` is a real value: no market fare existed, so cents-per-point is
+ *  undefined. Rendering it as 0.0¢ would present a missing input as a terrible
+ *  redemption. */
+export function formatCpp(cpp: number | null | undefined): string {
+  if (cpp === null || cpp === undefined) return "cpp n/a";
   return `${cpp.toFixed(1)}¢`;
+}
+
+/** §6.2 — the cash actually leaving the user's pocket (taxes + fuel charges). */
+export function formatUsd(usd: number | null | undefined): string {
+  if (usd === null || usd === undefined) return "—";
+  return `$${usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 export function formatDollars(cents: number): string {

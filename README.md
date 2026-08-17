@@ -8,6 +8,55 @@ Every verdict ships with its receipts: source, timestamp, trust weight, and a co
 
 ---
 
+## The thesis, in two queries
+
+The system exists because the best redemption is non-obvious in ways a flat
+route table cannot express. Same bank, same currency, same alliance:
+
+```
+$ mileage quote --from HND --to ITM --cabin business --currency chase_ur \
+      --miles 200000 --card sapphire_reserve
+  *   12,750 pts  $     24   Chase UR -> Avios [oneworld] on Japan Airlines
+
+$ mileage quote --from LHR --to JFK --cabin business --currency chase_ur \
+      --miles 200000 --card sapphire_reserve
+  *   34,000 pts  $    240   Chase UR -> Iberia Plus [oneworld] on American Airlines
+      40,000 pts  $    240   Chase UR -> Avios [oneworld] on American Airlines
+      40,000 pts  $    560   Chase UR -> Avios [oneworld] on British Airways
+```
+
+The last two rows are the point. Identical currency, identical chart, identical
+40,000-Avios price — and $320 apart in cash, because one flies American metal
+and the other flies British Airways. That difference comes from
+`knowledge/fuel_charges.yaml`, which is keyed on **(currency × operating
+carrier)** rather than on the program (§4.4). Key it on the program and the two
+collapse into one number, and the engine confidently recommends the worse one.
+
+The 12,750 comes from per-segment distance banding (§4.3): a 251-mile segment
+is priced as a 251-mile segment, not as a flat "North America ↔ North Asia" fare.
+
+**No cash-fare API is involved in any of those dollar figures.** Price paid —
+government taxes, airport add-ons, carrier surcharges — comes from our own
+tables, which is why comparing against live market fares stays out of scope
+without the product losing its dollar column.
+
+---
+
+## Three things this refuses to do
+
+- **Guess at availability.** `space_unknown` (nothing checked) and `no_space`
+  (checked, none found) are different states and are never collapsed. A silent
+  default that reads like a confirmed negative is worse than an error.
+- **Fabricate cents-per-point.** With no market fare, `cpp` is `null`, not
+  `0.0`. Points and price paid are always answerable, so a missing fare costs
+  one column, not the answer.
+- **Hide a route you can't book yet.** A route gated behind a card you don't
+  hold is listed separately with the card named and its fee — "3 routes require
+  a Sapphire card ›". What a card is worth on a trip you're actually trying to
+  take is useful output, not a filter.
+
+---
+
 ## Highlights
 
 - **A working, real scraper — not a stub.** The aggregator (`providers/aggregator/`) pulls live award charts from public partner pages (Aeroplan, LifeMiles, Turkish, ANA, KrisFlyer, EVA, Flying Blue, Alaska, American, Qatar, Iberia, and more) through a resilient fetch stack: `httpx` for plain pages, `curl_cffi` TLS/JA4 impersonation for stricter hosts, and Wayback Machine / RSS / PDF fallbacks when a page is unreachable. An adaptive per-domain throttle backs off on `429`s and rotates sources instead of hammering. Chart targets live in `knowledge/sources.yaml` (~32 as of 2026-07-28) — run `mileage sources --validate-urls --deep` for a live read.
@@ -15,7 +64,7 @@ Every verdict ships with its receipts: source, timestamp, trust weight, and a co
 - **A second, LLM-assisted data intake — with hallucination guardrails baked in.** Beyond scraping known URLs, the aggregator can also ingest newsletters, creator blog posts, and video transcripts, running each through a local extractor that turns prose into structured chart rows. Every extracted number is checked against the source text verbatim — a `miles` value that doesn't literally appear in the document is dropped, no matter how confident the model is. Extracted data is flagged and demoted relative to directly-scraped data until an independent source confirms it.
 - **Multi-user from the storage layer up, not bolted on.** Cache, rate-limiter, and lock are interfaces from day one, so the move from in-process dicts to a shared Redis backend was an adapter swap, not a rewrite. Two users hitting the same route concurrently trigger one live scrape, both served from cache, with a single atomic quota counter shared across every user — verified in `mileage demo-multiuser`.
 - **Full-stack, not just a script.** FastAPI backend with bearer auth, a Vite/React frontend, SQLite persistence, OpenTelemetry tracing (Arize AX-compatible) so every run is replayable, and a golden-route regression suite that runs in CI and fails the build on any dishonest answer.
-- **~150 automated tests, mostly hermetic** — the suite pins a deterministic fixture mode so it never depends on (or can be blocked by) a live network call; a few checks are live-network-only and skip offline.
+- **~190 automated tests, hermetic by construction** — the suite pins a deterministic fixture mode so it never depends on (or can be blocked by) a live network call, and the one live sweep is deselected by default rather than left to poison the runs after it. Full suite: ~19s. Beyond the golden routes there are property tests (ranking is deterministic and order-independent; first class never ranks below business; rounded transfer quantities always cover the award; every offered route's carrier actually serves the pair) and the §8 compile gate, which fails the build on a dangling cross-reference or a stamp older than 90 days.
 
 ---
 
@@ -31,16 +80,42 @@ The domain logic (`domain/`) never imports from any data source — every provid
 
 ```
 mileage/
-  domain/      # pure logic: models, transfer ratios, cents-per-point math, verdict rules
+  domain/      # pure logic — no I/O, no clock
+    geo.py       # airport reference: region, position, great-circle, haul band
+    service.py   # Table 3 (who flies it) + partner rights (who may book it)
+    fuel.py      # §4.4 (currency x operating carrier) -> price paid
+    rank.py      # §6.1 ranking; takes as_of, does no I/O
+    cards.py     # card products and the gates they satisfy
+    charts.py    # award-chart resolution (region, zone, and distance bands)
   providers/   # every data source behind one interface
     aggregator/  # the real scraper — fetch, parse, politeness/throttling, email + blog + transcript intake
   verify/      # provenance, trust, freshness, cross-checking, anti-hallucination bounds
-  graph/       # route graph + ranking (NetworkX)
+  graph/       # TRANSFER* -> REDEEM enumeration + pricing (NetworkX)
   store/       # SQLite persistence + swappable Cache/RateLimiter/Lock (in-process or Redis)
   api/         # FastAPI backend + bearer auth
+  knowledge_snapshot.py  # §8 compile step: integrity + staleness + content hash
   cli.py       # full pipeline, no web stack required
 ui/            # Vite + React frontend
 ```
+
+**The knowledge tables**, all version-controlled and human-reviewed. Scrapers
+write `bonus_calendar.yaml` (Table 2, promotions) and nothing else:
+
+| File | Table | What it decides |
+|---|---|---|
+| `airports.yaml` | ref | region + position for every airport, in one row so they can't drift apart |
+| `carriers.yaml` | 3 | which carrier flies which pair (hubs + served regions, not 40k hand-entered rows) |
+| `partners.yaml` | 1 | which carriers a currency may book |
+| `fuel_charges.yaml` | 1 | carrier surcharges keyed on (currency × operating carrier) |
+| `charts.yaml` | 1 | award charts — region matrix, zone matrix, and per-segment distance bands |
+| `ratios.yaml` | 1 | bank → program transfer ratios |
+| `alliances.yaml` | 1 | alliance membership + airline→airline transfer edges (Avios family) |
+| `cards.yaml` | 1 | card products, portal rates, and transfer gates |
+| `bonus_calendar.yaml` | **2** | live promotions — scraper-owned, never asserted on by tests |
+
+`mileage compile` validates every cross-reference and freshness stamp and emits
+a content hash. That hash namespaces every cache key, so editing a chart
+invalidates the cache instead of being masked by it for the 2-day TTL.
 
 ---
 

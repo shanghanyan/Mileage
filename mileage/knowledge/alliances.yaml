@@ -55,7 +55,9 @@ alliances:
   oneworld:
     name: oneworld
     programs:
-      - avios             # British Airways / Iberia / Aer Lingus (Avios)
+      - avios             # British Airways Executive Club (Avios)
+      - iberia_plus       # Iberia Plus (Avios family — separate ledger + chart)
+      - aer_lingus_aerclub  # Aer Lingus AerClub (Avios family)
       - american          # AAdvantage
       - alaska            # Mileage Plan
       - cathay_pacific    # Asia Miles
@@ -81,9 +83,92 @@ alliances:
       - spirit            # Free Spirit
       - frontier          # Frontier Miles
 
-# Loyalty→loyalty transfers (second hop). Ratios are points received per 1
-# source point. Secondary-sourced; re-verify before treating as authoritative.
+# Loyalty→loyalty transfers (second and third hops). Ratios are points received
+# per 1 source point. Secondary-sourced; re-verify before treating as
+# authoritative.
+#
+# ARCHITECTURE §3: "airline → airline transfers are real and expanding: the
+# Avios family now moves directly between seven programs, and mergers keep
+# creating new edges." Without these rows the graph can only ever produce
+# `bank → airline → seat`, which is a lookup table wearing a graph's clothing —
+# and indeed twelve days of sweeps produced no multi-hop route at all, because
+# the only program_transfers present started from hotel currencies nobody in
+# the sweep held. These are the edges that make the search a search.
+#
+# `settlement_minutes` matters at booking time: award space can vanish while a
+# transfer settles, and §6.1 uses it as the final tiebreak.
+# `gates` are §4.1 requirements — annotations, never filters.
 program_transfers:
+  # --- Avios family -------------------------------------------------------- #
+  # One currency, seven ledgers. Moves are 1:1 and near-instant, which is what
+  # makes routing THROUGH a program to reach a better award chart worthwhile.
+  - from: avios
+    to: iberia_plus
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Combine My Avios (1:1 between household programs)"
+    trust: 0.8
+    updated_at: "2026-08-01"
+    gates:
+      # The classic silent route-killer: a brand-new Iberia Plus account cannot
+      # send or receive Avios. Surfaced, never used to hide the route.
+      - kind: accountAge
+        program: iberia_plus
+        min_days: 90
+  - from: iberia_plus
+    to: avios
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Combine My Avios"
+    trust: 0.8
+    updated_at: "2026-08-01"
+    gates:
+      - kind: accountAge
+        program: iberia_plus
+        min_days: 90
+  - from: avios
+    to: aer_lingus_aerclub
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Combine My Avios"
+    trust: 0.8
+    updated_at: "2026-08-01"
+  - from: aer_lingus_aerclub
+    to: avios
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Combine My Avios"
+    trust: 0.8
+    updated_at: "2026-08-01"
+  - from: avios
+    to: qatar
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Qatar Privilege Club Avios"
+    trust: 0.75
+    updated_at: "2026-08-01"
+  - from: qatar
+    to: avios
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Qatar Privilege Club Avios"
+    trust: 0.75
+    updated_at: "2026-08-01"
+  - from: avios
+    to: finnair
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Finnair Plus Avios"
+    trust: 0.7
+    updated_at: "2026-08-01"
+  - from: iberia_plus
+    to: qatar
+    ratio: 1.0
+    settlement_minutes: 0
+    source: "Avios family — Combine My Avios"
+    trust: 0.75
+    updated_at: "2026-08-01"
+
   # Marriott Bonvoy → airlines (typical 3:1 = 0.333…). Useful when Marriott
   # is the user's currency OR an intermediate node later.
   - from: marriott_bonvoy

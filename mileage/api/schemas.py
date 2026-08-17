@@ -21,7 +21,10 @@ class RedemptionRequest(BaseModel):
     # Optional when authenticated: balances come from the user's account, not
     # the request body. Required for anonymous/single-user requests.
     miles: Optional[int] = Field(default=None, ge=0, examples=[90000])
-    card: Literal["venture", "venture_x"] = "venture_x"
+    # Any card id in knowledge/cards.yaml. Validated against that table rather
+    # than pinned to a literal pair, which previously made every non-Capital-One
+    # wallet unreachable through the API.
+    card: str = "venture_x"
     travel_window: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
@@ -43,7 +46,10 @@ class UserProfile(BaseModel):
 
 
 class UpsertUserRequest(BaseModel):
-    card: Literal["venture", "venture_x"] = "venture_x"
+    # Any card id in knowledge/cards.yaml. Validated against that table rather
+    # than pinned to a literal pair, which previously made every non-Capital-One
+    # wallet unreachable through the API.
+    card: str = "venture_x"
     balances: dict[str, int] = Field(default_factory=dict)
     preferences: dict[str, str] = Field(default_factory=dict)
 

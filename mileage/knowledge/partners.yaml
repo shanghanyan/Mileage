@@ -1,0 +1,141 @@
+# ARCHITECTURE §4.5 — PARTNER RIGHTS. Which carriers a currency may book.
+#
+# Kept separate from Table 3 on purpose:
+#   service (carriers.yaml) says WHO FLIES the city pair.
+#   partner rights (this file) says WHO IS ALLOWED TO BOOK it.
+# A route must satisfy both. Collapsing them loses real cases in each
+# direction — a carrier that flies the pair but isn't bookable with your
+# currency, and a bookable partner that doesn't serve the pair at all.
+#
+# Most rights follow alliance membership, so that is the default and only the
+# departures from it are enumerated. `extra` adds non-alliance partnerships;
+# `excluded` removes alliance members a program genuinely cannot book.
+
+version: 1
+updated_at: '2026-08-13'
+
+# When true, a program can book every carrier in its own alliance. Departures
+# are listed per-currency below.
+alliance_grants_booking: true
+
+currencies:
+  # --- oneworld ------------------------------------------------------------ #
+  avios:
+    alliance: oneworld
+    # Avios is a shared currency across the BA/IB/EI/Qatar/Finnair family.
+    extra: [AS]
+    note: >-
+      Alaska joined oneworld, so AS is bookable; listed explicitly because the
+      Avios family also has a direct AS partnership independent of alliance.
+
+  iberia_plus:
+    alliance: oneworld
+  aer_lingus_aerclub:
+    alliance: oneworld
+    excluded: [QF, MH]
+    note: AerClub's partner list is narrower than full oneworld.
+  american:
+    alliance: oneworld
+    extra: [EY]
+  alaska:
+    alliance: oneworld
+    extra: [EK, LH, SQ, KE]
+    note: >-
+      Mileage Plan keeps several non-oneworld partners from before it joined —
+      these are real and are why AS is often the cheapest way onto that metal.
+  cathay_pacific:
+    alliance: oneworld
+  qatar:
+    alliance: oneworld
+  qantas:
+    alliance: oneworld
+    extra: [EK]
+  finnair:
+    alliance: oneworld
+  japan_airlines:
+    alliance: oneworld
+    extra: [EK]
+  malaysia:
+    alliance: oneworld
+
+  # --- Star Alliance ------------------------------------------------------- #
+  united:
+    alliance: star_alliance
+  aeroplan:
+    alliance: star_alliance
+    extra: [EY, EK, CI]
+  turkish:
+    alliance: star_alliance
+  lifemiles:
+    alliance: star_alliance
+    extra: [EK]
+  krisflyer:
+    alliance: star_alliance
+    extra: [VS]
+  ana:
+    alliance: star_alliance
+    extra: [EK, VS]
+  asiana:
+    alliance: star_alliance
+  eva:
+    alliance: star_alliance
+  thai:
+    alliance: star_alliance
+  lufthansa:
+    alliance: star_alliance
+  swiss:
+    alliance: star_alliance
+  sas:
+    alliance: star_alliance
+  tap:
+    alliance: star_alliance
+  copa:
+    alliance: star_alliance
+  ethiopian:
+    alliance: star_alliance
+  egyptair:
+    alliance: star_alliance
+  air_india:
+    alliance: star_alliance
+  air_china:
+    alliance: star_alliance
+  air_new_zealand:
+    alliance: star_alliance
+
+  # --- SkyTeam ------------------------------------------------------------- #
+  delta:
+    alliance: skyteam
+  flying_blue:
+    alliance: skyteam
+  virgin_atlantic:
+    alliance: skyteam
+    extra: [NH, SQ]
+    note: Flying Club retains ANA and Singapore partnerships outside SkyTeam.
+  korean:
+    alliance: skyteam
+  china_airlines:
+    alliance: skyteam
+  china_eastern:
+    alliance: skyteam
+  aeromexico:
+    alliance: skyteam
+  vietnam:
+    alliance: skyteam
+  saudi:
+    alliance: skyteam
+  kenya:
+    alliance: skyteam
+
+  # --- Independent --------------------------------------------------------- #
+  emirates:
+    alliance: independent
+    extra: [EK, QF, AS, JAL]
+  etihad:
+    alliance: independent
+    extra: [EY, AA, VS]
+  jetblue:
+    alliance: independent
+    extra: [B6, EI, QR, SQ, EK]
+  southwest:
+    alliance: independent
+    extra: [WN]

@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mileage.config import Config, build_registry, load_federation
-from mileage.domain.models import Cabin, Layer, Route, User
+from mileage.domain.models import AwardSpace, Cabin, Layer, Route, User
 from mileage.providers.base import Query
 from mileage.providers.registry import ProviderRegistry
 from mileage.cli import run_quote
@@ -87,8 +87,15 @@ def test_cache_hit_costs_zero_quota() -> None:
         repo.close()
 
 
-def test_disable_aggregator_degrades_award_space() -> None:
-    """Engine A off -> no_live_space on winner, but Demo B verdict still best."""
+def test_disable_aggregator_reports_space_unknown_not_no_space() -> None:
+    """Engine A off -> `space_unknown`, NEVER `no_space`.
+
+    This is the distinction the flat `no_live_space` flag used to destroy. With
+    every award provider disabled, nothing looked for seats — so the honest
+    output is "we didn't check", not "we checked and there are none". Reporting
+    the second would be a fabricated negative that reads exactly like a real
+    one, which is worse than an error.
+    """
     with tempfile.TemporaryDirectory() as tmp:
         reg, repo = _registry(str(Path(tmp) / "t.db"))
         reg.disabled.add("aggregator")
@@ -98,7 +105,12 @@ def test_disable_aggregator_degrades_award_space() -> None:
         verdict = result["verdict"]
         assert verdict.label.value in ("best", "tentative_best")
         assert verdict.best_transfer is not None
-        assert "no_live_space" in verdict.best_transfer.flags
+
+        assert result["space_checked"] is False, "no award provider ran"
+        assert verdict.best_transfer.space is AwardSpace.UNKNOWN
+        assert "no_space" not in verdict.best_transfer.flags, (
+            "claimed a checked negative without checking"
+        )
         live = [a for a in result["awards"] if a.seats_available is not None]
         assert not live, "no live seats without aggregator"
         repo.close()

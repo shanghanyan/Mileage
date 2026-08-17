@@ -1,0 +1,118 @@
+# Card products (ARCHITECTURE §9 `data/cards.yaml`).
+#
+# A card matters for exactly three things:
+#   1. which currency it earns
+#   2. what its travel portal pays per point (the portal floor)
+#   3. which HARD gates it satisfies — several issuers only allow transfers to
+#      airline partners from their premium tiers (§4.1)
+#
+# Co-brand airline cards are `acquirable`: anyone can apply, so they never
+# disqualify a route (§6.3) — they annotate it with a fee and an approval wait.
+
+version: 1
+updated_at: '2026-08-13'
+
+cards:
+  # --- Capital One --------------------------------------------------------- #
+  venture:
+    name: Capital One Venture
+    currency: capital_one
+    portal_cpp: 1.0
+    annual_fee_usd: 95
+    transfers_to_partners: true
+  venture_x:
+    name: Capital One Venture X
+    currency: capital_one
+    portal_cpp: 1.25
+    annual_fee_usd: 395
+    transfers_to_partners: true
+
+  # --- Chase: transfers are gated on holding a premium card ---------------- #
+  sapphire_preferred:
+    name: Chase Sapphire Preferred
+    currency: chase_ur
+    portal_cpp: 1.0
+    annual_fee_usd: 95
+    transfers_to_partners: true
+  sapphire_reserve:
+    name: Chase Sapphire Reserve
+    currency: chase_ur
+    portal_cpp: 1.0
+    annual_fee_usd: 550
+    transfers_to_partners: true
+  ink_business_preferred:
+    name: Chase Ink Business Preferred
+    currency: chase_ur
+    portal_cpp: 1.0
+    annual_fee_usd: 95
+    transfers_to_partners: true
+  freedom_unlimited:
+    name: Chase Freedom Unlimited
+    currency: chase_ur
+    portal_cpp: 1.0
+    annual_fee_usd: 0
+    # The load-bearing case from §3: a Freedom-only holder cannot transfer to
+    # airline partners at all. Their points must first be pooled into a premium
+    # card's account — which is itself a TRANSFER edge, not a special case.
+    transfers_to_partners: false
+
+  # --- Amex ---------------------------------------------------------------- #
+  amex_gold:
+    name: American Express Gold
+    currency: amex_mr
+    portal_cpp: 1.0
+    annual_fee_usd: 325
+    transfers_to_partners: true
+  amex_platinum:
+    name: American Express Platinum
+    currency: amex_mr
+    portal_cpp: 1.0
+    annual_fee_usd: 695
+    transfers_to_partners: true
+
+  # --- Citi ---------------------------------------------------------------- #
+  citi_strata_premier:
+    name: Citi Strata Premier
+    currency: citi_typ
+    portal_cpp: 1.0
+    annual_fee_usd: 95
+    transfers_to_partners: true
+
+  # --- Bilt / Wells Fargo -------------------------------------------------- #
+  bilt_mastercard:
+    name: Bilt Mastercard
+    currency: bilt
+    portal_cpp: 1.25
+    annual_fee_usd: 0
+    transfers_to_partners: true
+  wells_fargo_autograph_journey:
+    name: Wells Fargo Autograph Journey
+    currency: wells_fargo
+    portal_cpp: 1.0
+    annual_fee_usd: 95
+    transfers_to_partners: true
+
+# Co-brand cards. These appear as `acquirable` gates: they unlock a route
+# nobody is locked out of, so the honest framing is "this card would cost you
+# $X and about Y days" rather than hiding the route.
+cobrand:
+  aer_lingus_visa:
+    name: Aer Lingus Visa Signature
+    program: aer_lingus_aerclub
+    annual_fee_usd: 95
+    approval_days: 14
+  british_airways_visa:
+    name: British Airways Visa Signature
+    program: avios
+    annual_fee_usd: 95
+    approval_days: 14
+  iberia_visa:
+    name: Iberia Visa Signature
+    program: iberia_plus
+    annual_fee_usd: 95
+    approval_days: 14
+  alaska_visa:
+    name: Alaska Airlines Visa Signature
+    program: alaska
+    annual_fee_usd: 95
+    approval_days: 14

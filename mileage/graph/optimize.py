@@ -1,33 +1,39 @@
-"""Rank redemption paths by cents-per-point (§7).
+"""Enumerate `TRANSFER* → REDEEM` paths and price each one (§5, §6.2).
 
-Enumerates every currency -> ... -> SEAT path on a MultiDiGraph (so base and
-transfer-bonus edges are both considered), compounds the effective transfer
-ratios along the hops, converts the seat's program-miles cost into source
-points, and computes CPP = net_cash / source_points (cash minus award taxes).
+What changed and why: this module used to compute cents-per-point as
+`(market_fare − taxes) / points`, which made an external cash fare a hard
+input. When the fare was missing the caller threw the entire ranking away and
+returned an error string — after doing the full graph search. Twelve days of
+sweeps spent ~67s/run producing error text for answers it had already computed,
+on exactly the long-haul routes the product exists for.
 
-Portal floor is only included when the currency has an honest portal rate —
-never invent a Cap One Venture rate for Chase/Amex/etc.
+Now every path is priced from our own tables:
+
+    price_paid = government taxes + airport add-ons + carrier surcharge
+
+which is always available (§4.4). `cpp` is computed only when a market fare
+happens to exist, and is None otherwise — one missing column instead of one
+missing answer.
 """
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 
 import networkx as nx
 
 from ..domain.alliances import currency_display_name
-from ..domain.cpp import (
-    cpp as cpp_fn,
-    compound_ratio,
-    portal_points_needed,
-    source_points_for_award,
-)
-from ..domain.models import PathOption, Provenance
-from ..domain.surcharges import estimate_taxes_cents
-from .build import MAX_TRANSFER_HOPS, SEAT_NODE
+from ..domain.cpp import compound_ratio, portal_points_needed, source_points_for_award
+from ..domain.cpp import cpp as cpp_fn
+from ..domain.fuel import FuelMatrix, PricePaid, fuel_matrix, price_paid
+from ..domain.geo import AirportTable, airports, route_distance_miles
+from ..domain.models import AwardSpace, Gate, PathOption, Provenance, Route
+from .build import MAX_TRANSFER_HOPS, carrier_of_seat, is_seat, seat_nodes
 
 
 def _portal_option(
+    route: Route,
     cash_cents: int,
     portal_cpp: float,
     balance: int,
@@ -36,6 +42,11 @@ def _portal_option(
     *,
     currency: str,
 ) -> PathOption:
+    """The 'just book it with the portal' floor.
+
+    Only meaningful when a cash fare exists — a portal redemption IS a cash
+    fare paid in points, so with no fare there is nothing to convert.
+    """
     pts = portal_points_needed(cash_cents, portal_cpp)
     return PathOption(
         label=f"{currency_display_name(currency)} portal",
@@ -43,15 +54,19 @@ def _portal_option(
         cpp=portal_cpp,
         source_points=int(pts),
         cash_cents=cash_cents,
+        price_paid_cents=0,  # the portal price IS the fare; nothing extra owed
         program=None,
         affordable=balance >= pts,
         confidence=round(fare_confidence, 3),
         flags=list(fare_flags),
         currency=currency,
+        cabin=route.cabin.value,
+        space=AwardSpace.CONFIRMED,  # portal inventory is revenue inventory
+        reason=f"portal floor at {portal_cpp:.2f}c/pt — always bookable",
     )
 
 
-def _hop_label(node: str, edge: dict, graph: nx.MultiDiGraph | nx.DiGraph) -> str:
+def _hop_label(node: str, edge: dict, graph: nx.MultiDiGraph) -> str:
     """Human label for one transfer hop, including bonus + alliance annotation."""
     name = node.replace("_", " ").title()
     label = edge.get("bonus_label")
@@ -72,22 +87,38 @@ def _hop_label(node: str, edge: dict, graph: nx.MultiDiGraph | nx.DiGraph) -> st
 
 
 def rank_paths(
-    graph: nx.MultiDiGraph | nx.DiGraph,
+    graph: nx.MultiDiGraph,
     currency: str,
     cash_cents: int,
     *,
-    portal_cpp: Optional[float],
-    balance: int,
+    route: Optional[Route] = None,
+    portal_cpp: Optional[float] = None,
+    balance: int = 0,
     fare_confidence: float = 1.0,
     fare_flags: Optional[list[str]] = None,
     max_transfer_hops: int = MAX_TRANSFER_HOPS,
-    surcharges: Optional[dict] = None,
+    matrix: Optional[FuelMatrix] = None,
+    table: Optional[AirportTable] = None,
+    as_of: Optional[date] = None,
 ) -> list[PathOption]:
+    """Every `TRANSFER* → REDEEM` path from `currency`, priced.
+
+    Returned unsorted-by-policy: ordering is domain/rank.py's job, which is pure
+    and testable in isolation. This function's job is enumeration + pricing.
+    """
     fare_flags = fare_flags or []
+    matrix = matrix or fuel_matrix()
+    table = table or airports()
     options: list[PathOption] = []
-    if portal_cpp is not None and portal_cpp > 0:
+
+    if route is None:  # legacy callers passed no route; nothing to price
+        route = Route("XXX", "XXX")
+
+    has_fare = cash_cents > 0
+    if portal_cpp is not None and portal_cpp > 0 and has_fare:
         options.append(
             _portal_option(
+                route,
                 cash_cents,
                 portal_cpp,
                 balance,
@@ -97,139 +128,176 @@ def rank_paths(
             )
         )
 
-    if currency not in graph or SEAT_NODE not in graph:
-        return sorted(options, key=lambda o: o.cpp, reverse=True)
+    if currency not in graph:
+        return options
 
     prefix = currency_display_name(currency)
-    cutoff = max_transfer_hops + 2
+    # +1 for the terminating REDEEM edge.
+    cutoff = max_transfer_hops + 1
+    distance = route_distance_miles(route, table=table)
 
-    if isinstance(graph, nx.MultiDiGraph):
-        edge_paths = nx.all_simple_edge_paths(graph, currency, SEAT_NODE, cutoff=cutoff)
-        for edge_path in edge_paths:
-            ratios: list[float] = []
-            confidences: list[float] = [fare_confidence]
-            provenance: list[Provenance] = []
-            flags: set[str] = set(fare_flags)
-            hop_labels: list[str] = []
-            program = edge_path[-1][0]
-            seats_available: Optional[int] = None
-            transfer_hops = 0
-            taxes_cents = 0
-            miles = 0
-
-            for u, v, key in edge_path:
-                edge = graph.edges[u, v, key]
-                confidences.append(edge.get("confidence", 0.5))
-                if edge.get("provenance"):
-                    provenance.append(edge["provenance"])
-                flags.update(edge.get("flags", []))
-                if v == SEAT_NODE:
-                    miles = edge["miles"]
-                    seats_available = edge.get("seats_available")
-                    taxes_cents = int(edge.get("taxes_cents") or 0)
-                    if edge.get("alliance_id") and edge["alliance_id"] != "independent":
-                        flags.add(f"alliance:{edge['alliance_id']}")
-                else:
-                    ratios.append(edge.get("ratio", edge.get("effective_ratio", 1.0)))
-                    hop_labels.append(_hop_label(v, edge, graph))
-                    transfer_hops += 1
-                    if "program_transfer" in edge.get("flags", []):
-                        flags.add("program_transfer")
-
-            if taxes_cents <= 0 and program:
-                est, tax_flags, tax_conf = estimate_taxes_cents(
-                    program, surcharges=surcharges
-                )
-                taxes_cents = est
-                flags.update(tax_flags)
-                confidences.append(tax_conf)
-
-            if seats_available is not None:
-                flags.add(f"{seats_available} seats")
-            if transfer_hops > 1:
-                flags.add("multi_hop")
-
-            eff_ratio = compound_ratio(ratios)
-            source_points = source_points_for_award(miles, eff_ratio)
-            path_cpp = cpp_fn(cash_cents, source_points, taxes_cents=taxes_cents)
-            path_conf = 1.0
-            for c in confidences:
-                path_conf *= c
-
-            label = f"{prefix} -> " + " -> ".join(hop_labels)
-            options.append(
-                PathOption(
-                    label=label,
-                    kind="transfer",
-                    cpp=round(path_cpp, 4),
-                    source_points=int(source_points),
-                    cash_cents=cash_cents,
-                    program=program,
-                    affordable=balance >= source_points,
-                    confidence=round(path_conf, 3),
-                    flags=sorted(flags),
-                    provenance=provenance,
-                    taxes_cents=taxes_cents,
-                    currency=currency,
-                )
+    for sink in seat_nodes(graph):
+        for edge_path in nx.all_simple_edge_paths(
+            graph, currency, sink, cutoff=cutoff
+        ):
+            option = _price_path(
+                graph,
+                edge_path,
+                currency=currency,
+                prefix=prefix,
+                route=route,
+                cash_cents=cash_cents,
+                balance=balance,
+                fare_confidence=fare_confidence,
+                fare_flags=fare_flags,
+                matrix=matrix,
+                table=table,
+                distance=distance,
             )
-    else:
-        for path in nx.all_simple_paths(graph, currency, SEAT_NODE, cutoff=cutoff):
-            ratios = []
-            confidences = [fare_confidence]
-            provenance = []
-            flags_set: set[str] = set(fare_flags)
-            program = path[-2]
-            seats_available = None
-            taxes_cents = 0
-            miles = 0
-            for u, v in zip(path, path[1:]):
-                edge = graph.edges[u, v]
-                confidences.append(edge.get("confidence", 0.5))
-                if edge.get("provenance"):
-                    provenance.append(edge["provenance"])
-                flags_set.update(edge.get("flags", []))
-                if v == SEAT_NODE:
-                    miles = edge["miles"]
-                    seats_available = edge.get("seats_available")
-                    taxes_cents = int(edge.get("taxes_cents") or 0)
-                else:
-                    ratios.append(edge["ratio"])
-            if taxes_cents <= 0 and program:
-                est, tax_flags, tax_conf = estimate_taxes_cents(
-                    program, surcharges=surcharges
-                )
-                taxes_cents = est
-                flags_set.update(tax_flags)
-                confidences.append(tax_conf)
-            if seats_available is not None:
-                flags_set.add(f"{seats_available} seats")
-            if len(path) - 2 > 1:
-                flags_set.add("multi_hop")
-            eff_ratio = compound_ratio(ratios)
-            source_points = source_points_for_award(miles, eff_ratio)
-            path_cpp = cpp_fn(cash_cents, source_points, taxes_cents=taxes_cents)
-            path_conf = 1.0
-            for c in confidences:
-                path_conf *= c
-            label = f"{prefix} -> " + " -> ".join(
-                n.replace("_", " ").title() for n in path[1:-1]
-            )
-            options.append(
-                PathOption(
-                    label=label,
-                    kind="transfer",
-                    cpp=round(path_cpp, 4),
-                    source_points=int(source_points),
-                    cash_cents=cash_cents,
-                    program=program,
-                    affordable=balance >= source_points,
-                    confidence=round(path_conf, 3),
-                    flags=sorted(flags_set),
-                    provenance=provenance,
-                    taxes_cents=taxes_cents,
-                    currency=currency,
-                )
-            )
+            if option is not None:
+                options.append(option)
 
-    return sorted(options, key=lambda o: o.cpp, reverse=True)
+    return options
+
+
+def _price_path(
+    graph: nx.MultiDiGraph,
+    edge_path: list,
+    *,
+    currency: str,
+    prefix: str,
+    route: Route,
+    cash_cents: int,
+    balance: int,
+    fare_confidence: float,
+    fare_flags: list[str],
+    matrix: FuelMatrix,
+    table: AirportTable,
+    distance: Optional[float],
+) -> Optional[PathOption]:
+    ratios: list[float] = []
+    confidences: list[float] = [fare_confidence]
+    provenance: list[Provenance] = []
+    flags: set[str] = set(fare_flags)
+    gates: list[Gate] = []
+    hop_labels: list[str] = []
+    program = edge_path[-1][0]
+    seats_available: Optional[int] = None
+    space = AwardSpace.UNKNOWN
+    transfer_hops = 0
+    settlement_minutes = 0
+    live_taxes_cents: Optional[int] = None
+    miles = 0
+    carrier: Optional[str] = None
+    carrier_name: Optional[str] = None
+
+    for u, v, key in edge_path:
+        edge = graph.edges[u, v, key]
+        confidences.append(edge.get("confidence", 0.5))
+        if edge.get("provenance"):
+            provenance.append(edge["provenance"])
+        flags.update(edge.get("flags", []))
+        for gate in edge.get("gates") or []:
+            # A currency-level gate (e.g. "Chase transfers need a premium
+            # card") sits on every hop out of that currency, so a 3-hop path
+            # would otherwise list it three times.
+            if gate not in gates:
+                gates.append(gate)
+
+        if is_seat(v):
+            miles = edge["miles"]
+            seats_available = edge.get("seats_available")
+            space = edge.get("space") or AwardSpace.UNKNOWN
+            carrier = edge.get("operating_carrier") or carrier_of_seat(v)
+            carrier_name = edge.get("carrier_name")
+            raw_taxes = edge.get("taxes_cents")
+            # `is not None`, not truthiness: 0 means a source CONFIRMED there
+            # are no taxes, which is a stronger statement than our estimate and
+            # must not be discarded as if it were missing.
+            live_taxes_cents = int(raw_taxes) if raw_taxes is not None else None
+            if edge.get("alliance_id") and edge["alliance_id"] != "independent":
+                flags.add(f"alliance:{edge['alliance_id']}")
+        else:
+            ratios.append(edge.get("ratio", edge.get("effective_ratio", 1.0)))
+            hop_labels.append(_hop_label(v, edge, graph))
+            transfer_hops += 1
+            settlement_minutes += int(edge.get("settlement_minutes") or 0)
+            if "program_transfer" in edge.get("flags", []):
+                flags.add("program_transfer")
+
+    if not miles:
+        return None
+
+    # Price paid — §4.4, keyed on (currency actually redeemed × operating
+    # carrier). `program` is the currency being spent at the redeem step, which
+    # for a multi-hop path is the LAST program, not the wallet we started from.
+    paid: PricePaid = price_paid(
+        program,
+        carrier,
+        route,
+        matrix=matrix,
+        table=table,
+        distance_miles=distance,
+    )
+    flags.update(paid.flags)
+    confidences.append(paid.confidence)
+
+    # A live tax quote, when one exists, beats our estimate for the government
+    # portion; the carrier surcharge estimate still applies on top.
+    taxes_cents = live_taxes_cents if live_taxes_cents is not None else paid.taxes_cents
+    if live_taxes_cents is not None:
+        flags.discard("estimated_surcharge")
+        flags.add("live_tax_quote")
+    total_paid = taxes_cents + paid.fuel_cents
+
+    if seats_available is not None:
+        flags.add(f"{seats_available} seats")
+    if transfer_hops > 1:
+        flags.add("multi_hop")
+
+    eff_ratio = compound_ratio(ratios)
+    source_points = source_points_for_award(miles, eff_ratio)
+
+    # cpp only when there is a fare to divide by. Previously this silently
+    # returned 0.0 with no fare, which sorts a real route below every other
+    # real route — a missing input quietly rendered as a terrible answer.
+    path_cpp = (
+        round(cpp_fn(cash_cents, source_points, taxes_cents=total_paid), 4)
+        if cash_cents > 0
+        else None
+    )
+    if cash_cents <= 0:
+        flags.add("no_market_fare")
+
+    path_conf = 1.0
+    for c in confidences:
+        path_conf *= c
+
+    label = f"{prefix} -> " + " -> ".join(hop_labels)
+    if carrier_name or carrier:
+        label = f"{label} on {carrier_name or carrier}"
+
+    return PathOption(
+        label=label,
+        kind="transfer",
+        cpp=path_cpp,
+        source_points=int(source_points),
+        cash_cents=cash_cents,
+        price_paid_cents=total_paid,
+        program=program,
+        affordable=balance >= source_points,
+        confidence=round(path_conf, 3),
+        flags=sorted(flags),
+        provenance=provenance,
+        taxes_cents=taxes_cents,
+        fuel_cents=paid.fuel_cents,
+        fuel_policy=paid.policy,
+        currency=currency,
+        cabin=route.cabin.value,
+        operating_carrier=carrier,
+        carrier_name=carrier_name,
+        space=space if isinstance(space, AwardSpace) else AwardSpace.UNKNOWN,
+        transfer_hops=transfer_hops,
+        settlement_minutes=settlement_minutes,
+        gates=gates,
+    )

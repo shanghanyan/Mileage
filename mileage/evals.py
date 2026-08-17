@@ -117,10 +117,16 @@ class GoldenCase:
     route: Route
     miles: int
     card: str
-    # Allowed outcomes: verdict labels, or "no_fare" for the no-data case.
+    # Allowed verdict labels for this case.
     expect: frozenset[str]
     expect_live_space: bool = False
     min_winner_cpp: Optional[float] = None
+    # Assert the run ran WITHOUT a market fare and still produced ranked
+    # options — the graceful-degradation contract (§1).
+    expect_degraded: bool = False
+    # Currency to run the case in. Most cases are the Capital One slice; the
+    # thesis case needs a bank that reaches Avios.
+    currency: str = DEFAULT_CURRENCY
     note: str = ""
 
 
@@ -159,13 +165,51 @@ GOLDEN_SET: list[GoldenCase] = [
         expect=frozenset({"portal_only"}),
         note="Honesty: the value path exists but is unaffordable at this balance.",
     ),
+    # ----------------------------------------------------------------------- #
+    # The architecture's own bar for "proven" (§11): same bank, same currency,
+    # same alliance, opposite outcomes — explained by the fuel-charge matrix and
+    # per-segment distance banding. A flat route table cannot express this.
+    # ----------------------------------------------------------------------- #
     GoldenCase(
-        name="no_data_route",
+        name="thesis_avios_on_jal_shorthaul",
+        route=Route("HND", "ITM", Cabin.BUSINESS),
+        miles=200000,
+        card="sapphire_reserve",
+        currency="chase_ur",
+        expect=frozenset({"best", "tentative_best", "comparable"}),
+        note=(
+            "Chase → Avios → JAL Tokyo–Osaka. Per-segment distance banding "
+            "prices a 251-mile segment at 12,750 Avios and JAL levies token "
+            "surcharges, so the cash owed is tens of dollars."
+        ),
+    ),
+    GoldenCase(
+        name="thesis_avios_on_ba_transatlantic",
+        route=Route("LHR", "JFK", Cabin.BUSINESS),
+        miles=200000,
+        card="sapphire_reserve",
+        currency="chase_ur",
+        expect=frozenset({"best", "tentative_best", "comparable"}),
+        note=(
+            "Same bank, same Avios balance, same alliance — but BA metal passes "
+            "full carrier surcharges and LHR adds UK APD, so the identical "
+            "40,000-Avios award costs hundreds more and ranks below AA metal."
+        ),
+    ),
+    GoldenCase(
+        name="no_fare_still_answers",
         route=Route("DEN", "SEA", Cabin.ECONOMY),
         miles=20000,
         card="venture_x",
-        expect=frozenset({"no_fare"}),
-        note="Graceful degradation: no verified price-to-beat -> honest no_fare.",
+        expect=frozenset({"best", "tentative_best", "portal_only", "comparable"}),
+        expect_degraded=True,
+        note=(
+            "A missing market fare degrades ONE COLUMN, not the answer. This "
+            "case used to expect `no_fare` — an error string produced after the "
+            "full graph search had already computed the ranking and thrown it "
+            "away. Points and price paid come from our own tables, so the route "
+            "list still stands; only cents-per-point goes missing."
+        ),
     ),
 ]
 
@@ -208,14 +252,28 @@ def _winner_failures(verdict: Verdict) -> list[str]:
 
 
 def _united_failures(verdict: Verdict) -> list[str]:
-    """Capital One does not transfer to United -> never a transfer option (§0)."""
+    """Capital One does not TRANSFER to United (§0). Booking United METAL is fine.
+
+    The invariant is about the transfer chain, never about the word "United"
+    appearing. `Cap One → Aeroplan, flown on United` is exactly the behavior the
+    architecture describes — Aeroplan books Star Alliance including United —
+    and it is the reason the graph exists rather than a lookup table.
+
+    The old check was `"united" in o.label.lower()`, which passed only because
+    labels didn't name the operating carrier yet. Once they did, every correct
+    Star Alliance redemption tripped it. A substring test cannot tell a
+    forbidden transfer from a legitimate redemption, so this inspects the chain.
+    """
     for o in verdict.options:
         if o.kind != "transfer":
             continue
-        if o.program == "united" or "united" in o.label.lower():
+        # Strip the " on <carrier>" suffix: the metal is not the transfer chain.
+        chain = o.label.split(" on ")[0].lower()
+        if o.program == "united" or "united" in chain:
             return [
-                "United appeared as a transfer option — no Capital One -> United "
-                "ratio exists; scraped United space must never enter the graph"
+                "United appeared as a TRANSFER destination — no Capital One -> "
+                "United ratio exists; scraped United space must never enter the "
+                f"graph (path: {o.label})"
             ]
     return []
 
@@ -268,13 +326,13 @@ def run_case(
     config: Config,
 ) -> CaseResult:
     user = User(
-        user_id="eval", balances={DEFAULT_CURRENCY: case.miles}, card=case.card
+        user_id="eval", balances={case.currency: case.miles}, card=case.card
     )
     with obs.span(
         f"eval:{case.name}", obs.KIND_CHAIN, input_value=case.route.key()
     ) as s:
         result = run_quote(
-            case.route, user, DEFAULT_CURRENCY,
+            case.route, user, case.currency,
             registry=registry, repo=repo, config=config,
         )
         verdict: Optional[Verdict] = result.get("verdict")
@@ -306,10 +364,36 @@ def run_case(
             )
         if case.min_winner_cpp is not None:
             bt = verdict.best_transfer
-            ok = bt is not None and bt.cpp >= case.min_winner_cpp
-            got = f"{bt.cpp:.2f}" if bt else "none"
+            ok = bt is not None and bt.cpp is not None and bt.cpp >= case.min_winner_cpp
+            got = f"{bt.cpp:.2f}" if bt and bt.cpp is not None else "none"
             checks.append(
                 Check(f"winner cpp >= {case.min_winner_cpp}", ok, f"got {got}c/pt")
+            )
+        if case.expect_degraded:
+            # The contract: no market fare, and an answer anyway.
+            checks.append(
+                Check(
+                    "degraded (no market fare)",
+                    bool(result.get("degraded")),
+                    "ran with a fare — this case is meant to have none",
+                )
+            )
+            priced = [
+                o for o in verdict.options if o.kind == "transfer" and o.source_points > 0
+            ]
+            checks.append(
+                Check(
+                    "ranked options survive a missing fare",
+                    bool(priced),
+                    f"{len(priced)} transfer option(s) returned",
+                )
+            )
+            checks.append(
+                Check(
+                    "cpp is None, not a fabricated 0.0",
+                    all(o.cpp is None for o in priced),
+                    "a route reported cents-per-point with no fare to compute it from",
+                )
             )
 
     return CaseResult(name=case.name, label=label, checks=checks)

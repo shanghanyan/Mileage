@@ -19,11 +19,24 @@ def apply_preferences(
       - prefer_morning: boost paths flagged morning (soft re-rank).
       - alliance: preferred alliance id (star_alliance / skyteam / oneworld);
         soft-boost matching paths.
+
+    Ordering is NOT this function's job. It arrives already ranked by §6.1
+    (domain/rank.py) and every re-rank here is a STABLE partition, so a
+    preference promotes matching rows without scrambling the ranking beneath
+    them. The previous version re-sorted everything by `-o.cpp`, which silently
+    discarded the cabin/cash/points ordering and raised on the None cpp that a
+    fare-free route now legitimately carries.
     """
     prefs = {k: str(v).lower() for k, v in (preferences or {}).items()}
 
     def _truthy(key: str) -> bool:
         return prefs.get(key, "") in {"1", "true", "yes", "on"}
+
+    def _promote(rows: list[PathOption], match) -> list[PathOption]:
+        """Stable partition: matches first, everything else in original order."""
+        yes = [o for o in rows if match(o)]
+        no = [o for o in rows if not match(o)]
+        return yes + no
 
     out = list(options)
     if _truthy("nonstop_only"):
@@ -40,27 +53,10 @@ def apply_preferences(
     alliance = prefs.get("alliance") or prefs.get("prefer_alliance")
     if alliance:
         flag = f"alliance:{alliance}"
-        boosted = [o for o in out if flag in o.flags]
-        rest = [o for o in out if o not in boosted]
-        # Soft preference: alliance matches first among equal-ish kinds.
-        out = sorted(
-            boosted + rest,
-            key=lambda o: (
-                0 if (flag in o.flags or o.kind == "portal") else 1,
-                -o.cpp,
-            ),
-        )
-    else:
-        out = sorted(out, key=lambda o: o.cpp, reverse=True)
+        out = _promote(out, lambda o: flag in o.flags or o.kind == "portal")
 
     if _truthy("prefer_morning"):
-        out = sorted(
-            out,
-            key=lambda o: (
-                0 if "morning" in o.flags else 1,
-                -o.cpp,
-            ),
-        )
+        out = _promote(out, lambda o: "morning" in o.flags)
     return out
 
 
@@ -74,7 +70,7 @@ def wait_for_bonus_flags(
     """Suggest waiting when a near-miss path partners with recent promo history."""
     if not recent_bonus_programs or best is None:
         return []
-    if portal_cpp and portal_cpp > 0:
+    if portal_cpp and portal_cpp > 0 and best.cpp is not None:
         if best.cpp >= portal_cpp * (1.0 + threshold):
             return []  # already a clear win
     prog = best.program

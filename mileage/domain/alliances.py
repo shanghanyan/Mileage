@@ -14,7 +14,47 @@ from typing import Iterable, Optional
 
 import yaml
 
-from .models import Provenance
+from .models import Gate, GateKind, Provenance
+
+
+def parse_gates(rows: Optional[Iterable[dict]]) -> list[Gate]:
+    """Parse §4.1 gate specs from YAML. Unknown kinds are dropped loudly-ish.
+
+    A gate never removes a route (§6.3) — it annotates one. Parsing failures
+    therefore fail open (no gate) rather than silently marking a route blocked,
+    which would hide it from the very list that exists to show it.
+    """
+    out: list[Gate] = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        raw = str(row.get("kind") or "")
+        try:
+            kind = GateKind(raw)
+        except ValueError:
+            continue
+        out.append(
+            Gate(
+                kind=kind,
+                card_ids=tuple(str(c) for c in (row.get("cardIds") or row.get("cards") or [])),
+                program_id=(
+                    str(row["program"]) if row.get("program") else row.get("programId")
+                ),
+                min_days=int(row["min_days"]) if row.get("min_days") is not None else None,
+                annual_fee_usd=(
+                    float(row["annual_fee_usd"])
+                    if row.get("annual_fee_usd") is not None
+                    else None
+                ),
+                approval_days=(
+                    int(row["approval_days"])
+                    if row.get("approval_days") is not None
+                    else None
+                ),
+                note=str(row.get("note") or ""),
+            )
+        )
+    return out
 
 
 @dataclass(frozen=True)
@@ -38,6 +78,8 @@ class ProgramTransfer:
     flags: list[str] = field(default_factory=lambda: ["program_transfer"])
     bonus_multiplier: float = 1.0
     bonus_label: Optional[str] = None
+    gates: list[Gate] = field(default_factory=list)
+    settlement_minutes: int = 0
 
     @property
     def effective_ratio(self) -> float:
@@ -92,6 +134,8 @@ def load_alliances_yaml(path: Path) -> tuple[dict[str, Alliance], list[ProgramTr
                 ),
                 confidence=trust,
                 flags=["program_transfer"],
+                gates=parse_gates(row.get("gates")),
+                settlement_minutes=int(row.get("settlement_minutes") or 0),
             )
         )
     return alliances, transfers
@@ -113,16 +157,6 @@ def program_to_alliance(alliances: dict[str, Alliance]) -> dict[str, Alliance]:
     return out
 
 
-def alliance_peers(
-    program: str, alliances: dict[str, Alliance]
-) -> frozenset[str]:
-    """Other programs in the same alliance (excluding self)."""
-    mapping = program_to_alliance(alliances)
-    alliance = mapping.get(program)
-    if alliance is None:
-        return frozenset()
-    return frozenset(p for p in alliance.programs if p != program)
-
 
 def currency_display_name(currency: str) -> str:
     """Human label for path prefixes (Capital One, Amex Mr, …)."""
@@ -141,10 +175,3 @@ def currency_display_name(currency: str) -> str:
     return currency.replace("_", " ").title()
 
 
-def index_transfers_from(
-    transfers: Iterable[ProgramTransfer],
-) -> dict[str, list[ProgramTransfer]]:
-    out: dict[str, list[ProgramTransfer]] = {}
-    for t in transfers:
-        out.setdefault(t.from_program, []).append(t)
-    return out

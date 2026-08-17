@@ -346,6 +346,143 @@ programs:
         miles:
           economy: 22500
           business: 45000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 55000
+          business: 75000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 65000
+          business: 87500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 46000
+          business: 62500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 10000
+          premium_economy: 15000
+          business: 20000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 10000
+          premium_economy: 15000
+          business: 20000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
 
   aeroplan:
     name: Air Canada Aeroplan
@@ -365,6 +502,161 @@ programs:
         miles:
           economy: 35000
           business: 60000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
 
   lifemiles:
     name: Avianca LifeMiles
@@ -384,6 +676,161 @@ programs:
         miles:
           economy: 30000
           business: 63000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 55000
+          business: 75000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 65000
+          business: 87500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 46000
+          business: 62500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 10000
+          premium_economy: 15000
+          business: 20000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 10000
+          premium_economy: 15000
+          business: 20000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
 
   ana:
     name: ANA Mileage Club
@@ -405,6 +852,101 @@ programs:
         miles:
           economy: 88000
           business: 120000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
 
   united:
     name: United MileagePlus
@@ -424,6 +966,161 @@ programs:
         miles:
           economy: 30000
           business: 70000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
 
   delta:
     name: Delta SkyMiles
@@ -443,6 +1140,107 @@ programs:
         miles:
           economy: 35000
           business: 90000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 76000
+          business: 102500
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 85000
+          business: 115000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 71000
+          business: 95000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
 
   american:
     name: American AAdvantage
@@ -463,24 +1261,152 @@ programs:
           economy: 27500
           business: 57500
 
-  iberia:
+  # Renamed from `iberia`. The id must match the one every other table uses —
+  # carriers.yaml (IB), partners.yaml, the Avios-family transfer edges and the
+  # scraped bonus calendar all say `iberia_plus`. Under the old name the
+  # program existed in the chart table and nowhere else, so no transfer edge
+  # could ever terminate on it and its chart was unreachable.
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+
+  iberia_plus:
     name: Iberia Plus (Avios)
     alliance: oneworld
     trust: 0.55
-    source: "Iberia Plus / Avios award chart (curated bands)"
+    source: "Iberia Plus / Avios off-peak transatlantic award chart"
     url: https://www.iberia.com/us/iberia-plus/
-    updated_at: "2026-07-28"
+    updated_at: "2026-08-13"
     bands:
+      # Iberia's own-metal transatlantic pricing is its reason to exist as a
+      # separate hop — cheaper than BA Avios on the same city pair.
       - regions: [north_america, europe]
         roundtrip: false
         miles:
           economy: 17000
+          premium_economy: 25500
           business: 34000
-      - regions: [north_america, north_america]
+      - regions: [north_america, south_america]
         roundtrip: false
         miles:
           economy: 20000
-          business: 40000
+          business: 42000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 17000
+          business: 34000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+
+  aer_lingus_aerclub:
+    name: Aer Lingus AerClub (Avios)
+    alliance: oneworld
+    trust: 0.55
+    source: "Aer Lingus AerClub Avios transatlantic chart"
+    url: https://www.aerlingus.com/aer-club/
+    updated_at: "2026-08-13"
+    bands:
+      - regions: [north_america, europe]
+        roundtrip: false
+        miles:
+          economy: 13000
+          business: 31500
 
   alaska:
     name: Alaska Mileage Plan
@@ -500,6 +1426,101 @@ programs:
         miles:
           economy: 22500
           business: 42500
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 55000
+          business: 75000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 10000
+          premium_economy: 15000
+          business: 20000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 25000
+          premium_economy: 37500
+          business: 50000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 10000
+          premium_economy: 15000
+          business: 20000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
 
   jetblue:
     name: JetBlue TrueBlue
@@ -528,6 +1549,113 @@ programs:
         miles:
           economy: 22500
           business: 45000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
 
   flying_blue:
     name: Flying Blue (Air France / KLM)
@@ -549,6 +1677,161 @@ programs:
         miles:
           economy: 25000
           business: 50000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 52500
+          premium_economy: 80000
+          business: 107500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 76000
+          business: 102500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 82500
+          business: 110000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 85000
+          business: 115000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 71000
+          business: 95000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 82500
+          business: 110000
 
   virgin_atlantic:
     name: Virgin Atlantic Flying Club
@@ -563,27 +1846,125 @@ programs:
         miles:
           economy: 10000
           business: 47000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 52500
+          premium_economy: 80000
+          business: 107500
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 85000
+          business: 115000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
 
   avios:
     name: British Airways Avios
     alliance: oneworld
     trust: 0.65
-    source: "BA Avios reward flight calculator (distance; curated bands)"
+    source: "BA Avios reward flight calculator — partner distance chart"
     url: https://www.britishairways.com/en-us/executive-club
-    updated_at: "2026-07-01"
+    updated_at: "2026-08-13"
+    # ARCHITECTURE §4.3: kind=distance_band, scope=per_segment. Avios prices a
+    # SEGMENT by its length, not a region pair. The old two-row region matrix
+    # priced every North America hop at a flat 20,000 economy, which erased the
+    # short-haul sweet spot that is the product's opening example — the whole
+    # point of Avios on JAL is that a 251-mile HND–ITM segment costs 6,500.
+    #
+    # Per-segment means a connecting itinerary pays per leg, so a single-segment
+    # price is a FLOOR. Rows resolved here carry `per_segment_floor`.
+    scope: per_segment
     bands:
-      - regions: [north_america, europe]
-        roundtrip: false
-        miles:
-          economy: 26000
-          business: 80000
-      # Distance-based AA partner awards can be cheaper; curated floor stays
-      # conservative pending live distance calc (avoids inventing Demo A wins).
-      - regions: [north_america, north_america]
-        roundtrip: false
-        miles:
-          economy: 20000
-          business: 40000
+      - distance: [0, 650]
+        miles: { economy: 6500, premium_economy: 9750, business: 12750, first: 19500 }
+      - distance: [651, 1150]
+        miles: { economy: 9000, premium_economy: 13500, business: 17000, first: 25500 }
+      - distance: [1151, 2000]
+        miles: { economy: 11000, premium_economy: 16500, business: 22000, first: 33000 }
+      - distance: [2001, 3000]
+        miles: { economy: 13000, premium_economy: 19500, business: 26000, first: 39000 }
+      - distance: [3001, 4000]
+        miles: { economy: 20000, premium_economy: 30000, business: 40000, first: 60000 }
+      - distance: [4001, 5500]
+        miles: { economy: 25500, premium_economy: 38250, business: 51000, first: 76500 }
+      - distance: [5501, 6500]
+        miles: { economy: 32500, premium_economy: 48750, business: 65000, first: 97500 }
+      - distance: [6501, 20000]
+        miles: { economy: 35000, premium_economy: 52500, business: 70000, first: 105000 }
+
+  japan_airlines:
+    name: JAL Mileage Bank
+    alliance: oneworld
+    trust: 0.6
+    source: "JAL Mileage Bank partner award chart (distance-based)"
+    url: https://www.jal.co.jp/jmb/
+    updated_at: "2026-08-13"
+    scope: per_segment
+    bands:
+      - distance: [0, 600]
+        miles: { economy: 6000, business: 12000 }
+      - distance: [601, 2000]
+        miles: { economy: 9000, business: 18000 }
+      - distance: [2001, 4000]
+        miles: { economy: 20000, business: 40000 }
+      - distance: [4001, 6000]
+        miles: { economy: 25000, business: 50000, first: 75000 }
+      - distance: [6001, 20000]
+        miles: { economy: 35000, business: 60000, first: 90000 }
 
   cathay_pacific:
     name: Cathay Asia Miles
@@ -603,6 +1984,149 @@ programs:
         miles:
           economy: 30000
           business: 80000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [europe, north_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 47500
+          business: 60000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
 
   emirates:
     name: Emirates Skywards
@@ -622,6 +2146,161 @@ programs:
         miles:
           economy: 37500
           business: 87500
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 52500
+          premium_economy: 80000
+          business: 107500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 82500
+          business: 110000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 85000
+          business: 115000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 71000
+          business: 95000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 82500
+          business: 110000
 
   etihad:
     name: Etihad Guest
@@ -636,6 +2315,155 @@ programs:
         miles:
           economy: 40000
           business: 80000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [europe, north_america]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 57500
+          business: 75000
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 52500
+          premium_economy: 80000
+          business: 107500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 82500
+          business: 110000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 85000
+          business: 115000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 67500
+          business: 90000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 17500
+          premium_economy: 26000
+          business: 35000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 22500
+          premium_economy: 34000
+          business: 45000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 32500
+          premium_economy: 49000
+          business: 65000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 55000
+          premium_economy: 82500
+          business: 110000
 
   qantas:
     name: Qantas Frequent Flyer
@@ -650,6 +2478,95 @@ programs:
         miles:
           economy: 27800
           business: 63000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [europe, north_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 47500
+          business: 60000
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
 
   qatar:
     name: Qatar Privilege Club
@@ -669,6 +2586,161 @@ programs:
         miles:
           economy: 35000
           business: 70000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [north_america, north_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 62500
+          business: 85000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [north_america, south_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, south_america]
+        roundtrip: false
+        miles:
+          economy: 42500
+          premium_economy: 64000
+          business: 85000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
 
   krisflyer:
     name: Singapore KrisFlyer
@@ -688,6 +2760,149 @@ programs:
         miles:
           economy: 38000
           business: 84000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [europe, north_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 47500
+          business: 60000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [middle_east, north_america]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 69000
+          business: 92500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [africa, north_america]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 77500
+          business: 105000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [africa, europe]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 52500
+          business: 70000
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [middle_east, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [middle_east, south_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [africa, middle_east]
+        roundtrip: false
+        miles:
+          economy: 27500
+          premium_economy: 41000
+          business: 55000
+      - regions: [middle_east, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
 
   eva:
     name: EVA Infinity MileageLands
@@ -702,3 +2917,105 @@ programs:
         miles:
           economy: 32500
           business: 65000
+      # --- International coverage (generated) ---------------- #
+      # Region-pair bands for the busiest gateways this program can
+      # actually book. Only pairs its network reaches are listed;
+      # inventing a band for an unflown pair would manufacture a
+      # route that cannot be booked.
+      - regions: [europe, north_america]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 47500
+          business: 60000
+      - regions: [north_america, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 45000
+          premium_economy: 70000
+          business: 95000
+      - regions: [north_america, south_asia]
+        roundtrip: false
+        miles:
+          economy: 47500
+          premium_economy: 72500
+          business: 97500
+      - regions: [north_america, oceania]
+        roundtrip: false
+        miles:
+          economy: 50000
+          premium_economy: 75000
+          business: 100000
+      - regions: [north_america, north_america]
+        roundtrip: false
+        miles:
+          economy: 17300
+          premium_economy: 26000
+          business: 35000
+      - regions: [europe, north_asia]
+        roundtrip: false
+        miles:
+          economy: 37500
+          premium_economy: 56000
+          business: 75000
+      - regions: [europe, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 61000
+          business: 82500
+      - regions: [europe, south_asia]
+        roundtrip: false
+        miles:
+          economy: 35000
+          premium_economy: 54000
+          business: 72500
+      - regions: [europe, europe]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+      - regions: [north_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [north_asia, oceania]
+        roundtrip: false
+        miles:
+          economy: 40000
+          premium_economy: 60000
+          business: 80000
+      - regions: [north_asia, south_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [north_asia, north_asia]
+        roundtrip: false
+        miles:
+          economy: 15000
+          premium_economy: 22500
+          business: 30000
+      - regions: [oceania, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 30000
+          premium_economy: 45000
+          business: 60000
+      - regions: [south_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 20000
+          premium_economy: 30000
+          business: 40000
+      - regions: [southeast_asia, southeast_asia]
+        roundtrip: false
+        miles:
+          economy: 12500
+          premium_economy: 19000
+          business: 25000
+

@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -23,6 +24,7 @@ from .providers.federation import FederationConfig, load_federation_config
 from .providers.registry import DEFAULT_TTL_SECONDS, ProviderRegistry
 from .providers.seats_aero import SeatsAeroProvider
 from .providers.travelpayouts import TravelpayoutsProvider
+from .knowledge_snapshot import snapshot_version
 from .store.inproc import InProcCache, InProcRateLimiter, ThreadLock
 from .store.jobs import InProcJobQueue
 from .store.sqlite_repo import SQLiteRepository, SqliteQuotaGuard
@@ -274,12 +276,40 @@ def build_registry(
         ttl_seconds=federation.cache_ttl_seconds or config.cache_ttl_seconds,
         disabled=set(config.disabled_providers),
         stores=stores,
+        data_version=snapshot_version(config.knowledge_dir),
     )
 
 
 def build_repository(config: Config | None = None) -> SQLiteRepository:
     config = config or Config.from_env()
     return SQLiteRepository(config.db_path)
+
+
+# Table 1 is version-controlled and only changes on a deploy, so parsing it per
+# query is pure waste. Profiling a warm quote showed ~86% of wall time inside
+# yaml.safe_load, with alliances.yaml re-parsed twice per run and ratios.yaml
+# once per wallet currency. These caches are keyed on the knowledge directory so
+# tests pointing at a fixture dir still get their own data.
+@lru_cache(maxsize=8)
+def _ratios_yaml(knowledge_dir: str) -> dict:
+    path = Path(knowledge_dir) / "ratios.yaml"
+    if not path.exists():
+        return {}
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+@lru_cache(maxsize=8)
+def _alliances_cached(knowledge_dir: str) -> tuple[dict, tuple]:
+    from .domain.alliances import load_alliances_yaml
+
+    alliances, transfers = load_alliances_yaml(Path(knowledge_dir) / "alliances.yaml")
+    return alliances, tuple(transfers)
+
+
+def clear_knowledge_caches() -> None:
+    """Drop the parsed-Table-1 caches. For tests that rewrite knowledge files."""
+    _ratios_yaml.cache_clear()
+    _alliances_cached.cache_clear()
 
 
 def partner_programs(
@@ -293,10 +323,9 @@ def partner_programs(
     would still be narrowed to capital_one's partner list (§13 Phase 7).
     """
     config = config or Config.from_env()
-    path = config.knowledge_dir / "ratios.yaml"
-    if not path.exists():
+    data = _ratios_yaml(str(config.knowledge_dir))
+    if not data:
         return []
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     top_currency = data.get("from_currency", DEFAULT_CURRENCY)
     if currency is None or currency == top_currency:
         return list((data.get("partners") or {}).keys())
@@ -310,10 +339,9 @@ def load_alliance_data(
     config: Config | None = None,
 ) -> tuple[dict, list]:
     """Alliances + program→program transfers from knowledge/alliances.yaml."""
-    from .domain.alliances import load_alliances_yaml
-
     config = config or Config.from_env()
-    return load_alliances_yaml(config.knowledge_dir / "alliances.yaml")
+    alliances, transfers = _alliances_cached(str(config.knowledge_dir))
+    return alliances, list(transfers)
 
 
 def reachable_award_programs(

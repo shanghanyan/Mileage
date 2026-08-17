@@ -128,17 +128,31 @@ class CuratedProvider:
         knowledge_dir: Optional[Path] = None,
         *,
         as_of: Optional[date] = None,
+        bonus_calendar_path: Optional[Path] = None,
     ) -> None:
         self._dir = Path(knowledge_dir) if knowledge_dir else _KNOWLEDGE_DIR
         self._ratios = self._load("ratios.yaml")
         self._charts = self._load("charts.yaml")
         self._fares = self._load("fares.yaml")
-        self._bonus_calendar = self._load("bonus_calendar.yaml")
+        # bonus_calendar.yaml is Table 2 — a scraper rewrites it. Tests that
+        # assert on a *specific* promo pin their own file here so an expiring
+        # bonus can't masquerade as a code regression.
+        self._bonus_calendar = (
+            self._load_path(Path(bonus_calendar_path))
+            if bonus_calendar_path
+            else self._load("bonus_calendar.yaml")
+        )
         # Injectable "today" so bonus windows are hermetic under tests.
         self._as_of = as_of or date.today()
+        from ..domain.cards import cards as _cards
+
+        self._cards = _cards(self._dir)
 
     def _load(self, filename: str) -> dict:
-        path = self._dir / filename
+        return self._load_path(self._dir / filename)
+
+    @staticmethod
+    def _load_path(path: Path) -> dict:
         if not path.exists():
             return {}
         with open(path, "r", encoding="utf-8") as fh:
@@ -185,6 +199,14 @@ class CuratedProvider:
                 trust=float(block.get("trust", 1.0)),
                 source_updated_at=_parse_date(block.get("updated_at")),
             )
+            # §4.1 HARD gate: several issuers only open partner transfers from
+            # their premium tiers. The architecture calls this out by name —
+            # Chase UR transfers require a Sapphire/Ink card, so a Freedom-only
+            # holder's route is real but not bookable today. Attached to the
+            # edge, never used to hide it (§6.3).
+            gate = self._cards.transfer_gate(from_currency)
+            gates = [gate] if gate else []
+
             for program, spec in (block.get("partners") or {}).items():
                 if q.programs and program not in q.programs:
                     continue
@@ -203,6 +225,7 @@ class CuratedProvider:
                             valid_from=v_from,
                             valid_until=v_until,
                             bonus_label=label,
+                            gates=list(gates),
                         )
                     )
         # Overlay live bonus calendar (scraped) — never hand-seed ratios.yaml.
@@ -267,19 +290,26 @@ class CuratedProvider:
                 trust=trust,
                 source_updated_at=_parse_date(spec.get("updated_at")),
             )
-            from ..domain.surcharges import estimate_taxes_cents
-
-            taxes, tax_flags, _ = estimate_taxes_cents(program)
+            # taxes_cents stays None for a chart quote. It means "a LIVE tax
+            # quote for this specific booking", and a chart has none.
+            #
+            # This used to fill in a per-PROGRAM estimate from surcharges.yaml
+            # — a single flat number for the whole of Avios. Downstream that
+            # estimate outranked the (currency × carrier) matrix, so Avios on
+            # JAL was priced at Avios-on-BA's $450 and the short-haul sweet spot
+            # that opens the architecture came out as the most expensive row on
+            # the board. A program-keyed surcharge cannot express the thing this
+            # product exists to show, so it is gone; §4.4 prices these now.
             out.append(
                 AwardQuote(
                     program=program,
                     route=q.route,
                     miles=hit.miles,
                     seats_available=None,  # chart-only: availability unknown
-                    taxes_cents=taxes or None,
+                    taxes_cents=None,
                     provenance=prov,
                     confidence=trust,
-                    flags=["no_live_space", *hit.flags, *tax_flags],
+                    flags=["no_live_space", *hit.flags],
                 )
             )
         return out

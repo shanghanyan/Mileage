@@ -1,10 +1,14 @@
 # Curated FALLBACK cash fares (Layer 2), US cents, one-way.
 #
-# In Phase 0 the primary fare source is Amadeus Flight Offers Search
-# (providers/amadeus.py). When no Amadeus key is configured, the pipeline
-# degrades gracefully (§2.4) to these curated reference fares, which the curated
-# provider emits flagged `hardcoded_fallback` at low trust — never `recommended`
-# (§7 step 4). They are the "price-to-beat" so a verdict can still be computed.
+# Emitted flagged `hardcoded_fallback` at low trust — never `recommended`.
+#
+# IMPORTANT: a missing entry here is NOT an error. ARCHITECTURE §1 puts
+# market-fare comparison out of scope for v1, and since the fuel-charge matrix
+# (§4.4) prices "price paid" from our own tables, a route with no fare still
+# returns a full ranked list — it just omits the cents-per-point column. These
+# rows are an enrichment, not a prerequisite. The pipeline used to treat a gap
+# here as a hard error and discard an already-computed ranking; it no longer
+# does, so this file can grow lazily instead of urgently.
 #
 # Key format: ORIGIN-DEST-cabin
 fares:
@@ -31,3 +35,125 @@ fares:
   JFK-SFO-economy: 17500
   SEA-LAX-economy: 12000
   LAX-SEA-economy: 12000
+
+  # --- The seven routes that returned nothing for twelve straight days ------ #
+  # Five of them were the long-hauls the product exists for.
+  EWR-LAX-economy: 16500
+  LAX-EWR-economy: 16500
+  LAX-NRT-business: 390000
+  NRT-LAX-business: 390000
+  SFO-LHR-business: 340000
+  LHR-SFO-business: 340000
+  LAX-CDG-business: 355000
+  CDG-LAX-business: 355000
+  LAX-FCO-business: 372000
+  FCO-LAX-business: 372000
+  SFO-IST-business: 430000
+  IST-SFO-business: 430000
+  LAX-SIN-business: 445000
+  SIN-LAX-business: 445000
+
+  # --- Wider international coverage at the busiest gateways ---------------- #
+  # Transatlantic
+  JFK-LHR-business: 320000
+  LHR-JFK-business: 320000
+  JFK-LHR-economy: 48000
+  LHR-JFK-economy: 48000
+  JFK-CDG-business: 315000
+  CDG-JFK-business: 315000
+  JFK-FRA-business: 330000
+  FRA-JFK-business: 330000
+  JFK-AMS-business: 318000
+  AMS-JFK-business: 318000
+  JFK-MAD-business: 305000
+  MAD-JFK-business: 305000
+  BOS-LHR-business: 300000
+  LHR-BOS-business: 300000
+  ORD-LHR-business: 325000
+  LHR-ORD-business: 325000
+  IAD-FRA-business: 322000
+  FRA-IAD-business: 322000
+  MIA-MAD-business: 310000
+  MAD-MIA-business: 310000
+
+  # Transpacific
+  SFO-HND-business: 385000
+  HND-SFO-business: 385000
+  LAX-HND-business: 392000
+  HND-LAX-business: 392000
+  SFO-ICN-business: 375000
+  ICN-SFO-business: 375000
+  LAX-ICN-business: 380000
+  ICN-LAX-business: 380000
+  SFO-HKG-business: 410000
+  HKG-SFO-business: 410000
+  LAX-SYD-business: 460000
+  SYD-LAX-business: 460000
+  SEA-NRT-business: 370000
+  NRT-SEA-business: 370000
+  SFO-SIN-business: 448000
+  SIN-SFO-business: 448000
+  ORD-PEK-business: 405000
+  PEK-ORD-business: 405000
+  SFO-TPE-business: 388000
+  TPE-SFO-business: 388000
+
+  # Middle East / South Asia / Africa
+  JFK-DXB-business: 415000
+  DXB-JFK-business: 415000
+  JFK-DOH-business: 420000
+  DOH-JFK-business: 420000
+  JFK-DEL-business: 430000
+  DEL-JFK-business: 430000
+  JFK-TLV-business: 345000
+  TLV-JFK-business: 345000
+  JFK-JNB-business: 480000
+  JNB-JFK-business: 480000
+  IAD-ADD-business: 445000
+  ADD-IAD-business: 445000
+
+  # Latin America
+  JFK-GRU-business: 335000
+  GRU-JFK-business: 335000
+  MIA-EZE-business: 315000
+  EZE-MIA-business: 315000
+  LAX-MEX-economy: 26000
+  MEX-LAX-economy: 26000
+  MIA-BOG-economy: 29000
+  BOG-MIA-economy: 29000
+
+  # Intra-Europe / intra-Asia short-haul (where per-segment banding shines)
+  LHR-CDG-economy: 9500
+  CDG-LHR-economy: 9500
+  LHR-MAD-economy: 11000
+  MAD-LHR-economy: 11000
+  FRA-IST-economy: 14000
+  IST-FRA-economy: 14000
+  HND-ITM-economy: 12000
+  ITM-HND-economy: 12000
+  HND-ITM-business: 26000
+  ITM-HND-business: 26000
+  HND-CTS-economy: 13000
+  CTS-HND-economy: 13000
+  SIN-BKK-economy: 14000
+  BKK-SIN-economy: 14000
+  HKG-NRT-business: 118000
+  NRT-HKG-business: 118000
+  SIN-HKG-economy: 21000
+  HKG-SIN-economy: 21000
+
+  # Domestic / transborder gaps that made the sweep look blind
+  JFK-SFO-business: 98000
+  SFO-JFK-business: 98000
+  LAX-JFK-business: 95000
+  JFK-LAX-business: 95000
+  ORD-LAX-economy: 14500
+  LAX-ORD-economy: 14500
+  ATL-LAX-economy: 15500
+  LAX-ATL-economy: 15500
+  DFW-LAX-economy: 12500
+  LAX-DFW-economy: 12500
+  YYZ-LAX-economy: 19500
+  LAX-YYZ-economy: 19500
+  SFO-YVR-economy: 13000
+  YVR-SFO-economy: 13000

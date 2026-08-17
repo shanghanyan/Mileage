@@ -1,0 +1,249 @@
+# ARCHITECTURE §4.4 — carrier-imposed surcharges keyed on
+# (award CURRENCY × OPERATING CARRIER).
+#
+# This is the file the whole product rests on. The key is deliberately NOT the
+# program alone: the same British Airways Avios balance costs roughly $16 in
+# surcharges on JAL metal and several hundred dollars on BA metal for the same
+# alliance, same currency, same cabin. Keying on the program cannot express
+# that difference, so a program-keyed table will confidently rank the worse
+# redemption first.
+#
+# What the user sees ("price paid", §6.2) is:
+#     government taxes + airport add-ons + carrier surcharge
+# All three are ours, from this file and airports.yaml. None of them needs an
+# external cash-fare feed — which is why §1 can put market-fare comparison out
+# of scope and still show a dollar number.
+#
+# These are conservative curated estimates, not live tax quotes. Every number
+# produced from this file is flagged `estimated_surcharge` and carries the
+# confidence declared here. A live tax quote, when one exists, overrides it.
+
+version: 1
+updated_at: '2026-08-13'
+confidence: 0.55
+
+# --------------------------------------------------------------------------- #
+# Policies — carrier surcharge by haul band, ECONOMY, one-way, USD cents.
+# Haul bands come from domain/geo.py (short <1500mi, medium <3500, long <7000,
+# ultra_long beyond).
+# --------------------------------------------------------------------------- #
+policies:
+  none:
+    label: No carrier surcharges
+    note: >-
+      Program does not pass carrier-imposed surcharges through on award
+      tickets. You still owe government taxes.
+    surcharge_cents: { short: 0, medium: 0, long: 0, ultra_long: 0 }
+
+  minimal:
+    label: Minimal carrier surcharges
+    note: Token YQ/YR only — tens of dollars, not hundreds.
+    surcharge_cents: { short: 300, medium: 900, long: 1600, ultra_long: 2000 }
+
+  moderate:
+    label: Moderate carrier surcharges
+    surcharge_cents: { short: 1500, medium: 5000, long: 11000, ultra_long: 14000 }
+
+  passes_full:
+    label: Passes full carrier surcharges
+    note: >-
+      The award "costs" points AND a cash amount that can rival a discounted
+      revenue fare. This is the failure mode the matrix exists to surface.
+    surcharge_cents: { short: 4000, medium: 16000, long: 30000, ultra_long: 35000 }
+
+# Carrier surcharges are levied per fare basis, so they scale with cabin.
+cabin_multiplier:
+  economy: 1.0
+  premium_economy: 1.4
+  business: 2.0
+  first: 2.6
+
+# --------------------------------------------------------------------------- #
+# Government taxes + airport fees. Program-independent: owed on any award,
+# in any currency, including the ones with a `none` surcharge policy.
+# One-way, USD cents.
+# --------------------------------------------------------------------------- #
+taxes:
+  default:
+    short: { economy: 1400, premium_economy: 1600, business: 1800, first: 2000 }
+    medium: { economy: 1800, premium_economy: 2100, business: 2400, first: 2700 }
+    long: { economy: 4000, premium_economy: 4600, business: 5200, first: 5800 }
+    ultra_long: { economy: 5000, premium_economy: 5600, business: 6400, first: 7000 }
+
+# Per-airport add-ons that dominate the bill when the itinerary touches them.
+# `levied_on: departure` matters — UK Air Passenger Duty is charged leaving the
+# UK, so LHR→JFK carries it and JFK→LHR does not. Modeling it as
+# non-directional overstates half of every transatlantic award by ~$216.
+#
+# The field is `levied_on`, NOT `on`: YAML 1.1 parses a bare `on` key as the
+# boolean True, so `spec.get("on")` returned None and every tax silently became
+# non-directional. The loader now rejects unknown keys rather than ignoring
+# them, so the next such typo fails at load instead of skewing prices.
+airport_taxes:
+  LHR:
+    levied_on: departure
+    cents: { economy: 1700, premium_economy: 21600, business: 21600, first: 21600 }
+    note: UK Air Passenger Duty — reduced rate economy, standard rate above it
+  LGW:
+    levied_on: departure
+    cents: { economy: 1700, premium_economy: 21600, business: 21600, first: 21600 }
+    note: UK Air Passenger Duty
+  MAN:
+    levied_on: departure
+    cents: { economy: 1700, premium_economy: 21600, business: 21600, first: 21600 }
+    note: UK Air Passenger Duty
+  LCY:
+    levied_on: departure
+    cents: { economy: 1700, premium_economy: 21600, business: 21600, first: 21600 }
+    note: UK Air Passenger Duty
+  CDG:
+    levied_on: departure
+    cents: { economy: 2000, premium_economy: 4500, business: 6000, first: 6000 }
+    note: French civil aviation + solidarity tax
+  FRA:
+    levied_on: departure
+    cents: { economy: 1600, premium_economy: 4000, business: 5500, first: 5500 }
+    note: German air transport tax
+  MUC:
+    levied_on: departure
+    cents: { economy: 1600, premium_economy: 4000, business: 5500, first: 5500 }
+    note: German air transport tax
+
+# --------------------------------------------------------------------------- #
+# The matrix. `carrier: "*"` is the currency default; a specific carrier row
+# overrides it. Longest match wins (specific carrier > wildcard).
+# --------------------------------------------------------------------------- #
+matrix:
+  # --- Avios family ------------------------------------------------------- #
+  # The reason this file exists. Same balance, opposite outcomes.
+  - { currency: avios, carrier: JAL, policy: minimal,
+      note: "JAL levies token surcharges on Avios awards — the short-haul sweet spot" }
+  - { currency: avios, carrier: AA, policy: none }
+  - { currency: avios, carrier: AS, policy: none }
+  - { currency: avios, carrier: BA, policy: passes_full,
+      note: "BA passes full YQ on its own metal; can exceed the value of the points" }
+  - { currency: avios, carrier: IB, policy: moderate }
+  - { currency: avios, carrier: EI, policy: moderate }
+  - { currency: avios, carrier: QR, policy: moderate }
+  - { currency: avios, carrier: CX, policy: moderate }
+  - { currency: avios, carrier: AY, policy: moderate }
+  - { currency: avios, carrier: QF, policy: minimal }
+  - { currency: avios, carrier: MH, policy: minimal }
+  - { currency: avios, carrier: "*", policy: moderate }
+
+  - { currency: iberia_plus, carrier: IB, policy: moderate }
+  - { currency: iberia_plus, carrier: BA, policy: passes_full }
+  - { currency: iberia_plus, carrier: JAL, policy: minimal }
+  - { currency: iberia_plus, carrier: AA, policy: none }
+  - { currency: iberia_plus, carrier: "*", policy: moderate }
+
+  - { currency: aer_lingus_aerclub, carrier: EI, policy: moderate }
+  - { currency: aer_lingus_aerclub, carrier: BA, policy: passes_full }
+  - { currency: aer_lingus_aerclub, carrier: "*", policy: moderate }
+
+  # --- Programs that pass nothing through --------------------------------- #
+  - { currency: lifemiles, carrier: "*", policy: none,
+      note: "LifeMiles charges no carrier surcharges on any partner" }
+  - { currency: turkish, carrier: "*", policy: none }
+  - { currency: united, carrier: "*", policy: none }
+  - { currency: alaska, carrier: "*", policy: none }
+  - { currency: american, carrier: "*", policy: none }
+  - { currency: delta, carrier: "*", policy: none }
+  - { currency: jetblue, carrier: "*", policy: none }
+  - { currency: southwest, carrier: "*", policy: none }
+  - { currency: copa, carrier: "*", policy: none }
+  - { currency: air_new_zealand, carrier: "*", policy: none }
+
+  # --- Aeroplan: none on most, but Lufthansa group is the known exception -- #
+  - { currency: aeroplan, carrier: LH, policy: passes_full,
+      note: "Aeroplan passes Lufthansa group YQ" }
+  - { currency: aeroplan, carrier: LX, policy: passes_full }
+  - { currency: aeroplan, carrier: OS, policy: passes_full }
+  - { currency: aeroplan, carrier: BR, policy: moderate }
+  - { currency: aeroplan, carrier: "*", policy: none }
+
+  # --- Mixed programs ------------------------------------------------------ #
+  - { currency: krisflyer, carrier: SQ, policy: minimal }
+  - { currency: krisflyer, carrier: LH, policy: moderate }
+  - { currency: krisflyer, carrier: "*", policy: minimal }
+
+  - { currency: ana, carrier: NH, policy: minimal }
+  - { currency: ana, carrier: LH, policy: passes_full }
+  - { currency: ana, carrier: LX, policy: passes_full }
+  - { currency: ana, carrier: "*", policy: minimal }
+
+  - { currency: eva, carrier: BR, policy: minimal }
+  - { currency: eva, carrier: "*", policy: minimal }
+
+  - { currency: flying_blue, carrier: AF, policy: moderate }
+  - { currency: flying_blue, carrier: KL, policy: moderate }
+  - { currency: flying_blue, carrier: DL, policy: none }
+  - { currency: flying_blue, carrier: "*", policy: moderate }
+
+  - { currency: virgin_atlantic, carrier: VS, policy: passes_full,
+      note: "VS passes full YQ on its own metal on top of UK APD" }
+  - { currency: virgin_atlantic, carrier: DL, policy: none }
+  - { currency: virgin_atlantic, carrier: NH, policy: minimal }
+  - { currency: virgin_atlantic, carrier: "*", policy: moderate }
+
+  - { currency: cathay_pacific, carrier: CX, policy: moderate }
+  - { currency: cathay_pacific, carrier: AA, policy: none }
+  - { currency: cathay_pacific, carrier: JAL, policy: minimal }
+  - { currency: cathay_pacific, carrier: "*", policy: moderate }
+
+  - { currency: qatar, carrier: QR, policy: moderate }
+  - { currency: qatar, carrier: AA, policy: none }
+  - { currency: qatar, carrier: "*", policy: moderate }
+
+  - { currency: qantas, carrier: QF, policy: moderate }
+  - { currency: qantas, carrier: AA, policy: none }
+  - { currency: qantas, carrier: JAL, policy: minimal }
+  - { currency: qantas, carrier: "*", policy: moderate }
+
+  - { currency: finnair, carrier: AY, policy: moderate }
+  - { currency: finnair, carrier: BA, policy: passes_full }
+  - { currency: finnair, carrier: "*", policy: moderate }
+
+  - { currency: japan_airlines, carrier: JAL, policy: minimal }
+  - { currency: japan_airlines, carrier: BA, policy: passes_full }
+  - { currency: japan_airlines, carrier: "*", policy: minimal }
+
+  - { currency: emirates, carrier: EK, policy: moderate }
+  - { currency: emirates, carrier: "*", policy: moderate }
+
+  - { currency: etihad, carrier: EY, policy: moderate }
+  - { currency: etihad, carrier: AA, policy: none }
+  - { currency: etihad, carrier: "*", policy: moderate }
+
+  - { currency: korean, carrier: KE, policy: minimal }
+  - { currency: korean, carrier: "*", policy: minimal }
+
+  - { currency: asiana, carrier: OZ, policy: minimal }
+  - { currency: asiana, carrier: "*", policy: minimal }
+
+  - { currency: thai, carrier: TG, policy: moderate }
+  - { currency: thai, carrier: "*", policy: moderate }
+
+  - { currency: lufthansa, carrier: "*", policy: passes_full,
+      note: "Miles & More passes YQ broadly" }
+
+  - { currency: malaysia, carrier: "*", policy: minimal }
+  - { currency: air_india, carrier: "*", policy: minimal }
+  - { currency: air_china, carrier: "*", policy: minimal }
+  - { currency: china_airlines, carrier: "*", policy: minimal }
+  - { currency: china_eastern, carrier: "*", policy: minimal }
+  - { currency: vietnam, carrier: "*", policy: minimal }
+  - { currency: aeromexico, carrier: "*", policy: minimal }
+  - { currency: ethiopian, carrier: "*", policy: minimal }
+  - { currency: egyptair, carrier: "*", policy: minimal }
+  - { currency: saudi, carrier: "*", policy: minimal }
+  - { currency: kenya, carrier: "*", policy: minimal }
+  - { currency: sas, carrier: "*", policy: moderate }
+  - { currency: tap, carrier: "*", policy: moderate }
+  - { currency: swiss, carrier: "*", policy: passes_full }
+
+# Fallback when a (currency, carrier) pair is absent entirely. Deliberately
+# `moderate` rather than `none`: guessing zero understates the bill and makes an
+# unknown look like a bargain. Rows produced this way are flagged
+# `fuel_policy_unknown` so the uncertainty is visible, not buried.
+default_policy: moderate

@@ -81,6 +81,13 @@ python_files = ["test_*.py"]
 markers = [
     "beta_daily: live beta route sweep (Redis wipe + JSONL log); run with -m beta_daily",
 ]
+# The sweep is deselected by default. It is the one test that deliberately
+# breaks the suite's hermeticity — it re-exports live keys, sets
+# MILEAGE_OFFLINE=0, and runs `refresh-bonuses`, which REWRITES
+# knowledge/bonus_calendar.yaml. Collected inline it poisoned every test that
+# ran after it (8 failures, all order-dependent). Run it on purpose:
+#     pytest -m beta_daily -s
+addopts = "-m 'not beta_daily'"
 # tests/conftest.py pins MILEAGE_OFFLINE=1 so the suite stays hermetic.
 
 [tool.setuptools]

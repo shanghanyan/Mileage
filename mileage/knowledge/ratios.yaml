@@ -100,7 +100,7 @@ currencies:
       united: 1.0        # Chase → United MileagePlus (added mid-2020s; confirm)
       hyatt: 1.0         # Chase → World of Hyatt
       marriott_bonvoy: 1.0
-      iberia: 1.0        # Avios via Iberia (same Avios family; chart uses avios)
+      iberia_plus: 1.0   # Iberia Plus — own ledger + own chart in the Avios family
 
   - from_currency: citi_typ
     source: "Award Travel Finder — Citi ThankYou Points transfer partners"

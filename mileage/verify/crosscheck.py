@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
-from ..domain.models import AwardQuote, FareQuote, Provenance, Route
+from ..domain.models import AwardQuote, AwardSpace, FareQuote, Provenance, Route
 from .bounds import fare_within_bounds, within_bounds
 from .freshness import age_decayed_confidence, is_stale
 from .trust import spread, trust_weighted_median
@@ -41,6 +41,9 @@ class VerifiedAward:
     taxes_cents: Optional[int] = None
     flags: list[str] = field(default_factory=list)
     provenance: list[Provenance] = field(default_factory=list)
+    operating_carrier: Optional[str] = None
+    carrier_name: Optional[str] = None
+    space: AwardSpace = AwardSpace.UNKNOWN
 
 
 @dataclass
@@ -57,9 +60,21 @@ def _independent_sources(quotes: list[AwardQuote]) -> int:
 
 
 def verify_award_quotes(
-    quotes: list[AwardQuote], *, now: Optional[datetime] = None
+    quotes: list[AwardQuote],
+    *,
+    now: Optional[datetime] = None,
+    space_checked: bool = False,
 ) -> list[VerifiedAward]:
-    """Group by program and reconcile each group into one verified award."""
+    """Group by program and reconcile each group into one verified award.
+
+    `space_checked` says whether a live-availability source actually ran for
+    this route. It is the difference between "we asked and there are no seats"
+    (AwardSpace.NONE) and "nothing asked" (AwardSpace.UNKNOWN). The caller
+    knows this — the verifier cannot infer it, because an empty result from a
+    provider that never ran looks identical to an empty result from one that
+    did. Defaulting to UNKNOWN is the honest choice: claiming a negative we
+    never checked is worse than admitting ignorance.
+    """
     by_program: dict[str, list[AwardQuote]] = {}
     for q in quotes:
         if not q.provenance or q.provenance.source_name == "unknown":
@@ -87,11 +102,25 @@ def verify_award_quotes(
             flags.update(q.flags)
             if is_stale(q.provenance, now=now):
                 flags.add("stale")
-        if live:
-            flags.discard("no_live_space")
 
         seats = [q.seats_available for q in group if q.seats_available is not None]
         seats_available = max(seats) if seats else None
+
+        # The three-state decision. `no_live_space` is retired as an output: it
+        # meant both "checked, zero" and "never checked", and reporting the
+        # second as the first is the failure this split exists to end.
+        flags.discard("no_live_space")
+        if seats_available is not None and seats_available > 0:
+            space = AwardSpace.CONFIRMED
+        elif space_checked:
+            space = AwardSpace.NONE
+        else:
+            space = AwardSpace.UNKNOWN
+        flags.add(space.value)
+
+        carriers = [q.operating_carrier for q in group if q.operating_carrier]
+        operating_carrier = carriers[0] if carriers else None
+        carrier_names = [q.carrier_name for q in group if q.carrier_name]
         tax_vals = [q.taxes_cents for q in group if q.taxes_cents is not None]
         taxes_cents = int(round(sum(tax_vals) / len(tax_vals))) if tax_vals else None
 
@@ -120,6 +149,9 @@ def verify_award_quotes(
                 taxes_cents=taxes_cents,
                 flags=sorted(flags),
                 provenance=[q.provenance for q in group],
+                operating_carrier=operating_carrier,
+                carrier_name=carrier_names[0] if carrier_names else None,
+                space=space,
             )
         )
     return verified

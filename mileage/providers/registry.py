@@ -65,7 +65,11 @@ class ProviderRegistry:
         ttl_seconds: float = DEFAULT_TTL_SECONDS,
         disabled: Optional[set[str]] = None,
         stores: object = None,
+        data_version: str = "v0",
     ) -> None:
+        # Content hash of Tables 1 + 3. Namespaces every cache entry so a
+        # knowledge edit can't be masked by a warm cache.
+        self.data_version = data_version
         self._providers: list[Provider] = []
         self.cache: Cache = cache or InProcCache()
         self.rate_limiter: RateLimiter = rate_limiter or InProcRateLimiter()
@@ -125,7 +129,15 @@ class ProviderRegistry:
 
     def _cache_key(self, provider: Provider, q: Query) -> str:
         programs = ",".join(sorted(q.programs)) if q.programs else "*"
-        return f"{provider.name}:{q.layer.value}:{q.route.key()}:{q.currency}:{programs}"
+        # The knowledge-snapshot version is part of the key (§8). Without it a
+        # chart edit — or a change to what a field MEANS — keeps being served
+        # from pre-change entries for the full 2-day TTL, and the stale answer
+        # is indistinguishable from a fresh one. Versioning the key makes any
+        # Table 1/3 edit self-invalidating.
+        return (
+            f"{self.data_version}:{provider.name}:{q.layer.value}:"
+            f"{q.route.key()}:{q.currency}:{programs}"
+        )
 
     def _record(
         self,
@@ -259,6 +271,47 @@ class ProviderRegistry:
                 if not pool:
                     break
         return collected
+
+    def layer_was_queried(self, layer: Layer) -> bool:
+        """Did a provider for `layer` actually complete a fetch this run?
+
+        Not "was one eligible" and not "did it return rows". A provider that was
+        rate-limited, quota-blocked, locked out or that raised produced an empty
+        list indistinguishable from one that looked and found nothing — and
+        treating that as a checked negative is precisely how ~50 award slots
+        reported a confident "no space" for twelve days without a single live
+        source ever being consulted. Only a cache hit or a completed fetch
+        counts as having asked.
+        """
+        return any(
+            e.layer == layer.value and (e.cache_hit or not e.skipped)
+            for e in self._stats.events
+        )
+
+    def layer_diagnostics(self, layer: Layer) -> dict:
+        """Why a layer produced what it produced, for this run.
+
+        An empty quote list has several very different causes — nothing
+        eligible, quota exhausted, rate limited, an exception — and they all
+        look the same downstream. Reporting "0 options" without saying which is
+        the same failure as reporting `no_live_space` for a source that never
+        ran: a gap in our own plumbing rendered as a fact about the world.
+        """
+        events = [e for e in self._stats.events if e.layer == layer.value]
+        skipped: dict[str, int] = {}
+        for e in events:
+            if e.skipped and e.skip_reason:
+                skipped[e.skip_reason] = skipped.get(e.skip_reason, 0) + 1
+        return {
+            "eligible_providers": [p.name for p in self.providers_for(layer)],
+            "attempts": len(events),
+            "queried": self.layer_was_queried(layer),
+            "quotes": sum(e.quotes for e in events),
+            "skipped": skipped,
+            "degraded": bool(skipped) and not any(
+                (e.cache_hit or not e.skipped) and e.quotes for e in events
+            ),
+        }
 
     def provider_status(self) -> list[dict]:
         """Snapshot for `mileage providers` — health, quota, federation order."""

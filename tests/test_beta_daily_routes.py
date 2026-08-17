@@ -73,15 +73,35 @@ BETA_ROUTE_CASES: tuple[BetaRouteCase, ...] = (
     BetaRouteCase("LAX", "SEA", "economy", "capital_one", "venture_x", "West return"),
     BetaRouteCase("SFO", "IST", "business", "amex_mr", "venture_x", "Star long-haul"),
     BetaRouteCase("LAX", "SIN", "business", "capital_one", "venture_x", "KrisFlyer"),
+    # --- The thesis pair (§11). Same bank, same currency, same alliance ----- #
+    BetaRouteCase("HND", "ITM", "business", "chase_ur", "sapphire_reserve",
+                  "THESIS: Avios on JAL — per-segment banding, minimal fuel"),
+    BetaRouteCase("LHR", "JFK", "business", "chase_ur", "sapphire_reserve",
+                  "THESIS: Avios on BA — same currency, fuel charges demote it"),
+    # --- Wider international coverage --------------------------------------- #
+    BetaRouteCase("JFK", "LHR", "business", "amex_mr", "amex_platinum", "NYC-London"),
+    BetaRouteCase("JFK", "CDG", "business", "chase_ur", "sapphire_preferred", "NYC-Paris"),
+    BetaRouteCase("SFO", "HKG", "business", "capital_one", "venture_x", "Cathay"),
+    BetaRouteCase("LAX", "SYD", "business", "citi_typ", "venture_x", "Qantas"),
+    BetaRouteCase("JFK", "DXB", "business", "bilt", "venture_x", "Emirates"),
+    BetaRouteCase("JFK", "GRU", "business", "amex_mr", "amex_platinum", "Sao Paulo"),
+    BetaRouteCase("JFK", "JNB", "business", "chase_ur", "sapphire_reserve", "Johannesburg"),
+    BetaRouteCase("JFK", "DEL", "business", "capital_one", "venture_x", "Delhi"),
+    BetaRouteCase("SFO", "ICN", "business", "citi_typ", "venture_x", "Seoul"),
+    BetaRouteCase("LHR", "CDG", "economy", "chase_ur", "sapphire_reserve",
+                  "Intra-Europe short-haul (per-segment banding)"),
+    # A wallet that CANNOT transfer out — proves the gated list is real, not a
+    # theoretical feature (§6.3).
+    BetaRouteCase("LHR", "JFK", "business", "chase_ur", "freedom_unlimited",
+                  "GATED: Freedom-only holder — routes shown, card named"),
 )
 
-# Not run yet — add when Amadeus cash or chart scrape reliably covers them.
+# Not run yet — add when chart or availability coverage reliably reaches them.
 FUTURE_ROUTE_IDEAS: tuple[str, ...] = (
-    "More Paris: ORY, BVA; CDG↔JFK business",
-    "More Rome: FCO↔JFK, MXP business",
-    "More London: LHR↔SFO first, LGW economy",
-    "More Tokyo: HND business, NRT↔ORD",
-    "More NYC: JFK↔LHR, EWR↔CDG business",
+    "First class: LHR↔JFK first, SFO↔HND first (needs first-cabin chart rows)",
+    "Secondary Europe: ORY, BVA, MXP, LGW",
+    "Intra-Asia depth: HND↔CTS, SIN↔BKK, HKG↔TPE",
+    "Award-space coverage beyond the two pairs the live feed reaches",
 )
 
 BALANCE = 100_000
@@ -199,33 +219,62 @@ def _top3(payload: dict[str, Any]) -> list[dict[str, Any]]:
             {
                 "label": o.get("label"),
                 "kind": o.get("kind"),
-                "cpp": o.get("cpp"),
+                # Points and cash are always present; cpp may legitimately be
+                # null when no market fare existed. Logging cpp alone made a
+                # degraded row indistinguishable from a broken one.
                 "source_points": o.get("source_points"),
+                "price_paid_usd": o.get("price_paid_usd"),
+                "cpp": o.get("cpp"),
+                "operating_carrier": o.get("operating_carrier"),
+                "fuel_policy": o.get("fuel_policy"),
+                "space": o.get("space"),
+                "transfer_hops": o.get("transfer_hops"),
+                "reason": o.get("reason"),
                 "flags": [
                     f
                     for f in (o.get("flags") or [])
                     if "bonus" in f or "live" in f or "portal" in f
+                    or f.startswith("collapsed_variants")
                 ],
             }
         )
     return out
 
 
-def _log_paths(day: date) -> tuple[Path, Path]:
+def _log_paths(stamp: datetime) -> tuple[Path, Path]:
+    """Log files are named by the RUN's UTC timestamp, not by `date.today()`.
+
+    The old naming used local `date.today()` while every row carried a UTC
+    stamp, so the 8/2 file actually held a run from 8/3T04:13 and 8/3 held two
+    runs. The filename was not a usable time axis, which makes twelve days of
+    logs much harder to reason about than they should be. UTC everywhere, and
+    the date in the name is the date in the rows.
+    """
     _LOG_DIR.mkdir(parents=True, exist_ok=True)
-    stem = day.isoformat()
+    stem = stamp.date().isoformat()
     return _LOG_DIR / f"{stem}.jsonl", _LOG_DIR / f"{stem}.md"
 
 
 def _append_run_banner(
-    jsonl_path: Path, md_path: Path, *, day: date, redis_status: dict[str, Any]
+    jsonl_path: Path,
+    md_path: Path,
+    *,
+    stamp: datetime,
+    redis_status: dict[str, Any],
+    snapshot: str,
 ) -> None:
-    """Stamp the start of THIS run into both logs, independent of whether the
-    day's file already existed. Guarantees the redis wipe status survives on
-    the record even if the day's file was created by an earlier run today."""
+    """Stamp the start of THIS run into both logs.
+
+    Carries the knowledge-snapshot hash (§8) so a reader can tell which chart
+    version produced a block. Two runs on 7/29 disagreed about LAX-JFK — 17,300
+    points versus 12,500 — with nothing in the file saying which chart version
+    was authoritative, or that one was a 0.03s cache hit and the other a 15.8s
+    fresh fetch. Both facts are recorded now.
+    """
     banner = {
         "type": "run_meta",
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": stamp.isoformat(),
+        "snapshot": snapshot,
         **redis_status,
     }
     with jsonl_path.open("a", encoding="utf-8") as fh:
@@ -234,14 +283,15 @@ def _append_run_banner(
     is_new_file = not md_path.exists()
     lines: list[str] = []
     if is_new_file:
-        lines.append(f"# Beta daily sweep — {day.isoformat()}\n")
+        lines.append(f"# Beta daily sweep — {stamp.date().isoformat()} (UTC)\n")
         lines.append(f"Balance: **{BALANCE:,}** pts per route\n\n")
     if redis_status["redis_wipe_warning"]:
-        lines.append(f"### ⚠️ Run @ {banner['ts']} — Redis NOT wiped: {redis_status['redis_wipe_note']}\n\n")
+        lines.append(f"### ⚠️ Run @ {banner['ts']} — Redis NOT wiped: {redis_status['redis_wipe_note']}\n")
     elif redis_status["redis_wipe_status"] == "wiped":
-        lines.append(f"### ✅ Run @ {banner['ts']} — Redis wiped: {redis_status['redis_wipe_note']}\n\n")
+        lines.append(f"### ✅ Run @ {banner['ts']} — Redis wiped: {redis_status['redis_wipe_note']}\n")
     else:
-        lines.append(f"### Run @ {banner['ts']} — Redis: {redis_status['redis_wipe_note']}\n\n")
+        lines.append(f"### Run @ {banner['ts']} — Redis: {redis_status['redis_wipe_note']}\n")
+    lines.append(f"Knowledge snapshot: `{snapshot}`\n\n")
     with md_path.open("a", encoding="utf-8") as fh:
         fh.writelines(lines)
 
@@ -286,12 +336,20 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
         except Exception as exc:
             meta["bonus_refresh_error"] = str(exc)
 
-    today = date.today()
-    jsonl_path, md_path = _log_paths(today)
-    _append_run_banner(jsonl_path, md_path, day=today, redis_status=redis_status)
+    from mileage.knowledge_snapshot import snapshot_version
+
+    snapshot = snapshot_version(cfg.knowledge_dir)
+    meta["snapshot"] = snapshot
+
+    run_stamp = datetime.now(timezone.utc)
+    jsonl_path, md_path = _log_paths(run_stamp)
+    _append_run_banner(
+        jsonl_path, md_path, stamp=run_stamp,
+        redis_status=redis_status, snapshot=snapshot,
+    )
     rows: list[dict[str, Any]] = []
 
-    window_start = date.today()
+    window_start = run_stamp.date()
     window_end = window_start + timedelta(days=90)
 
     for i, case in enumerate(cases, start=1):
@@ -301,6 +359,9 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
             card=case.card,
             balances={case.currency: BALANCE},
         )
+        # Per-route cache accounting, so a 0.03s cached block and a 15.8s fresh
+        # block are never confused for two disagreeing measurements.
+        registry.reset_stats()
         t0 = time.perf_counter()
         try:
             result = run_quote(
@@ -327,12 +388,32 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
             "note": case.note,
             "elapsed_s": elapsed,
             "verdict": payload.get("verdict"),
+            "rationale": payload.get("rationale"),
+            "reason": payload.get("reason"),
             "error": payload.get("error"),
             "message": payload.get("message"),
+            "snapshot": snapshot,
+            "cache_hits": registry.stats.cache_hits,
+            "cache_misses": registry.stats.cache_misses,
             "fare_cents": payload.get("fare_cents"),
             "fare_flags": payload.get("fare_flags"),
+            "degraded": payload.get("degraded"),
             "portal_cpp": payload.get("portal_cpp"),
             "top3": _top3(payload),
+            # Three states, logged separately. A silent default that reads as a
+            # checked negative is what made twelve days of `no_live_space`
+            # unfalsifiable from the logs alone.
+            "space_checked": payload.get("space_checked"),
+            "award_space": payload.get("award_space"),
+            "coverage": payload.get("coverage"),
+            "options_considered": payload.get("options_considered"),
+            "options_shown": payload.get("options_shown"),
+            # §6.3 — gated routes are never hidden, so they are never omitted
+            # from the log either. A run with 0 shown options and 10 gated ones
+            # is a completely different result from a run that found nothing.
+            "gated_summary": payload.get("gated_summary"),
+            "gated_count": len(payload.get("gated_options") or []),
+            "carriers_serving": payload.get("carriers_serving"),
             "live_award_space": payload.get("live_award_space"),
             # Carried on every row (not just the run banner) so a reader
             # filtering/greping individual route lines still sees whether
@@ -374,16 +455,43 @@ def _append_markdown_summary(path: Path, row: dict[str, Any], *, header: bool) -
     if row.get("error"):
         lines.append(f"- **Error:** {row.get('message') or row['error']}\n")
     else:
-        lines.append(
-            f"- **Verdict:** {row.get('verdict')} · fare ${(row.get('fare_cents') or 0) / 100:.0f}\n"
+        fare = row.get("fare_cents")
+        fare_bit = f"fare ${fare / 100:.0f}" if fare else "no market fare (degraded)"
+        space = (
+            "space checked" if row.get("space_checked") else "space NOT checked"
         )
+        shown, considered = row.get("options_shown"), row.get("options_considered")
+        cap = (
+            f" · showing {shown} of {considered}"
+            if considered and shown and considered > shown
+            else ""
+        )
+        lines.append(f"- **Verdict:** {row.get('verdict')} · {fare_bit} · {space}{cap}\n")
         for j, opt in enumerate(row.get("top3") or [], start=1):
             flags = ", ".join(opt.get("flags") or []) or "—"
+            cpp = f"{opt['cpp']}¢/pt" if opt.get("cpp") is not None else "cpp n/a"
+            paid = opt.get("price_paid_usd")
+            paid_bit = f"${paid:,.0f}" if paid is not None else "$?"
             lines.append(
-                f"- **#{j}** {opt.get('label')} — {opt.get('cpp')}¢/pt "
-                f"({opt.get('source_points'):,} pts) [{flags}]\n"
+                f"- **#{j}** {opt.get('label')} — {opt.get('source_points'):,} pts · "
+                f"{paid_bit} · {cpp} · {opt.get('space') or '?'} [{flags}]\n"
             )
-    lines.append(f"- _{row['elapsed_s']}s_\n\n")
+        for entry in row.get("gated_summary") or []:
+            lines.append(
+                f"- **gated:** {entry['routes']} route(s) {entry['requirement']}\n"
+            )
+        if not (row.get("top3") or row.get("gated_summary")):
+            # An empty list is a real answer here — "nothing you hold can book
+            # this" — but only if it says so. A bare blank block is the same
+            # ambiguity as `no_live_space`: unbookable and unqueried look
+            # identical until one of them explains itself.
+            lines.append(
+                f"- _no bookable option: {row.get('rationale') or 'see `coverage` in the JSONL'}_\n"
+            )
+            lines.append(f"- _carriers serving this pair: "
+                         f"{', '.join(row.get('carriers_serving') or []) or 'none in the service map'}_\n")
+    cache = f"{row.get('cache_hits', 0)}h/{row.get('cache_misses', 0)}m"
+    lines.append(f"- _{row['elapsed_s']}s · cache {cache} · snap {row.get('snapshot', '?')}_\n\n")
     with path.open("a", encoding="utf-8") as fh:
         fh.writelines(lines)
 

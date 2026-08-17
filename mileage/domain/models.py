@@ -44,6 +44,115 @@ class VerdictLabel(str, Enum):
     TENTATIVE_BEST = "tentative_best"  # best, but the winner carries a warning flag
 
 
+class AwardSpace(str, Enum):
+    """Three states, because two is a lie.
+
+    The system previously had one flag, `no_live_space`, covering two entirely
+    different situations: "we asked and there are no seats" and "nothing ever
+    asked". Twelve days of sweeps showed ~50 path-slots reporting the same
+    `no_live_space` with zero variation — which turned out to be the second
+    case wearing the first case's clothes. A silent default that reads as a
+    confirmed negative is the worst failure mode available here, because it
+    looks exactly like a real answer.
+
+    CONFIRMED — a live source returned seats for this program/route.
+    NONE      — a live source WAS queried and returned zero. A real negative.
+    UNKNOWN   — no live source covered this. We do not know. Not a negative.
+    """
+
+    CONFIRMED = "space_confirmed"
+    NONE = "no_space"
+    UNKNOWN = "space_unknown"
+
+    @property
+    def label(self) -> str:
+        return {
+            AwardSpace.CONFIRMED: "seats confirmed",
+            AwardSpace.NONE: "checked — no seats",
+            AwardSpace.UNKNOWN: "availability not checked",
+        }[self]
+
+
+# Ranking order for §6.1 step 1. Cabin class dominates every other criterion.
+CLASS_RANK: dict[str, int] = {
+    Cabin.FIRST.value: 4,
+    Cabin.BUSINESS.value: 3,
+    Cabin.PREMIUM_ECONOMY.value: 2,
+    Cabin.ECONOMY.value: 1,
+}
+
+
+# --------------------------------------------------------------------------- #
+# Gates (§4.1) — requirements that qualify a route without hiding it
+# --------------------------------------------------------------------------- #
+class GateKind(str, Enum):
+    HARD = "hard"              # bank tier requirement (Chase premium card, …)
+    ACQUIRABLE = "acquirable"  # co-brand card — anyone can apply
+    ACCOUNT_AGE = "accountAge"  # e.g. Iberia Plus needs a 90-day-old account
+
+
+@dataclass(frozen=True)
+class Gate:
+    """A requirement on a route. Gated routes are NEVER hidden (§6.3).
+
+    `acquirable` gates never disqualify anything — anyone can apply for a
+    co-brand card — so they annotate rather than filter. `hard` and
+    `accountAge` gates can genuinely block a booking today, but the route is
+    still shown, because "this card would unlock this trip" is itself the
+    useful answer.
+    """
+
+    kind: GateKind
+    card_ids: tuple[str, ...] = ()
+    program_id: Optional[str] = None
+    min_days: Optional[int] = None
+    annual_fee_usd: Optional[float] = None
+    approval_days: Optional[int] = None
+    note: str = ""
+
+    def satisfied_by(self, cards: frozenset[str], account_age_days: dict[str, int]) -> bool:
+        if self.kind is GateKind.HARD:
+            return bool(cards & set(self.card_ids))
+        if self.kind is GateKind.ACQUIRABLE:
+            return True  # never disqualifying — annotate only
+        if self.kind is GateKind.ACCOUNT_AGE:
+            if self.program_id is None or self.min_days is None:
+                return True
+            # We usually have NO idea how old someone's Iberia Plus account is.
+            # Treating "unknown" as "too young" would bury a good route behind a
+            # requirement we never checked — the same mistake as reporting
+            # `no_space` for availability nobody looked up. Unknown means the
+            # route stays visible and carries the requirement as a caveat;
+            # only a known-too-young account actually blocks.
+            known = account_age_days.get(self.program_id)
+            if known is None:
+                return True
+            return known >= self.min_days
+        return True
+
+    def is_advisory(self, account_age_days: dict[str, int]) -> bool:
+        """True when this gate informs rather than blocks for this user."""
+        if self.kind is GateKind.ACQUIRABLE:
+            return True
+        if self.kind is GateKind.ACCOUNT_AGE and self.program_id is not None:
+            return account_age_days.get(self.program_id) is None
+        return False
+
+    def describe(self) -> str:
+        if self.kind is GateKind.HARD:
+            cards = ", ".join(c.replace("_", " ").title() for c in self.card_ids)
+            return f"requires {cards}"
+        if self.kind is GateKind.ACQUIRABLE:
+            cards = ", ".join(c.replace("_", " ").title() for c in self.card_ids)
+            fee = f" — ${self.annual_fee_usd:,.0f}/yr" if self.annual_fee_usd else ""
+            wait = f", ~{self.approval_days}d approval" if self.approval_days else ""
+            return f"requires {cards}{fee}{wait}"
+        if self.kind is GateKind.ACCOUNT_AGE:
+            prog = (self.program_id or "").replace("_", " ").title()
+            return f"{prog} account must be {self.min_days}+ days old"
+        return self.note or "gated"
+
+
 # Portal floor, cents-per-point.
 # Capital One: fixed by product (Venture / Venture X).
 # Other currencies: honest baseline portal rates (not Points Boost peaks).
@@ -197,6 +306,11 @@ class AwardQuote:
     route: Route
     miles: int                 # one-way miles in the program's own currency
     seats_available: Optional[int] = None  # None => unknown (chart-only)
+    # Which airline's metal this award books. Required to price surcharges,
+    # because the same currency prices very differently by operating carrier
+    # (§4.4). None means the source didn't say.
+    operating_carrier: Optional[str] = None
+    carrier_name: Optional[str] = None
     # Taxes / carrier surcharges still owed in USD cents when booking the award.
     # None = unknown; 0 = confirmed zero. Charts often omit these — use
     # knowledge/surcharges.yaml estimates when live tax quotes are missing.
@@ -234,6 +348,13 @@ class TransferRatio:
     valid_from: Optional[str] = None   # ISO date inclusive, or None
     valid_until: Optional[str] = None  # ISO date inclusive, or None
     bonus_label: Optional[str] = None  # e.g. "+30% transfer bonus"
+    # §4.1 — requirements attached to this edge. Never used to hide a route.
+    gates: list[Gate] = field(default_factory=list)
+    # How long the points take to land. Ranking tiebreak (§6.1 step 5) and a
+    # real booking risk: award space can vanish while a transfer settles.
+    settlement_minutes: int = 0
+    min_qty: int = 0
+    increment_qty: int = 1
 
     @property
     def effective_ratio(self) -> float:
@@ -249,20 +370,60 @@ class TransferRatio:
 # --------------------------------------------------------------------------- #
 @dataclass
 class PathOption:
-    """One concrete way to pay for the seat, ranked by cents-per-point."""
+    """One concrete way to pay for the seat.
+
+    Two cash numbers, deliberately distinct:
+
+      price_paid_cents — what LEAVES YOUR POCKET: taxes + fuel charges, from
+                         our own tables (§4.4). Always known. This is the
+                         number §6.2 puts on screen.
+      cash_cents       — the market fare this redemption displaces. Requires an
+                         external fare feed, which §1 puts out of scope for v1,
+                         so it is frequently 0 and `cpp` is then None.
+
+    `cpp` is Optional for that reason. It used to be a float that silently read
+    0.0 with no fare, and the pipeline responded by throwing away a fully
+    computed ranking and returning an error string. Points and price paid are
+    always available, so a missing fare degrades one column rather than the
+    whole answer.
+    """
 
     label: str                 # human label, e.g. "Capital One -> Turkish"
     kind: str                  # "portal" | "transfer"
-    cpp: float                 # cents per source point (net of award taxes)
     source_points: int         # source-currency points required
-    cash_cents: int            # cash value being unlocked (gross fare)
+    cpp: Optional[float] = None  # cents per source point; None = no fare basis
+    cash_cents: int = 0        # market fare displaced (0 when unknown)
+    price_paid_cents: int = 0  # taxes + fuel charges — always known
     program: Optional[str] = None
     affordable: bool = True    # does the user hold enough points?
     confidence: float = 0.5
     flags: list[str] = field(default_factory=list)
     provenance: list[Provenance] = field(default_factory=list)
-    taxes_cents: int = 0       # award taxes/surcharges still owed
+    taxes_cents: int = 0       # government + airport portion of price paid
+    fuel_cents: int = 0        # carrier-imposed portion of price paid
+    fuel_policy: Optional[str] = None
     currency: Optional[str] = None  # source currency for multi-wallet ranking
+    cabin: str = Cabin.ECONOMY.value
+    operating_carrier: Optional[str] = None  # the metal you actually fly
+    carrier_name: Optional[str] = None
+    space: AwardSpace = AwardSpace.UNKNOWN
+    transfer_hops: int = 0
+    settlement_minutes: int = 0
+    gates: list[Gate] = field(default_factory=list)
+    # Why this row ranks where it does / why it is or isn't the winner. The
+    # sweep showed `best` vs `tentative_best` was not reconstructable from the
+    # output — if a reader can't infer the rule from the data, neither can a
+    # user, so the rule is stated rather than implied.
+    reason: str = ""
+
+    @property
+    def price_paid_usd(self) -> float:
+        return self.price_paid_cents / 100.0
+
+    @property
+    def blocking_gates(self) -> list[Gate]:
+        """Gates that could stop a booking today. Acquirable ones never do."""
+        return [g for g in self.gates if g.kind is not GateKind.ACQUIRABLE]
 
 
 @dataclass
@@ -274,3 +435,10 @@ class Verdict:
     options: list[PathOption]
     rationale: str
     flags: list[str] = field(default_factory=list)
+    # The RULE that produced this label, in words. Twelve days of sweep output
+    # left `best` vs `tentative_best` unreconstructable by a careful reader —
+    # so the deciding rule is now stated instead of implied.
+    reason: str = ""
+    # §6.3 — routes held back by a card or account-age gate. Never hidden;
+    # surfaced separately so the UI can offer "3 routes require a Sapphire card ›".
+    gated: list[PathOption] = field(default_factory=list)

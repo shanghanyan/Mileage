@@ -23,31 +23,99 @@ export interface RedemptionRequest {
   end_date?: string;
 }
 
+/** Three states, because two is a lie (see domain/models.py AwardSpace).
+ *  `no_space` = a live source WAS queried and found nothing.
+ *  `space_unknown` = nothing looked. Never render this as "unavailable". */
+export type AwardSpaceState = "space_confirmed" | "no_space" | "space_unknown";
+
+export interface Gate {
+  kind: "hard" | "acquirable" | "accountAge";
+  description: string;
+  card_ids: string[];
+  annual_fee_usd?: number | null;
+  approval_days?: number | null;
+}
+
 export interface PathOption {
   label: string;
   kind: "portal" | "transfer";
-  cpp: number;
+  /** Always present — the two numbers a user actually pays. */
   source_points: number;
+  price_paid_cents: number;
+  price_paid_usd: number;
+  taxes_cents: number;
+  fuel_cents: number;
+  fuel_policy?: string | null;
+  /** null when no market fare existed to compute it from. NOT the same as 0. */
+  cpp: number | null;
+  cash_cents?: number | null;
+  program?: string | null;
+  operating_carrier?: string | null;
+  carrier_name?: string | null;
+  cabin: string;
+  space: AwardSpaceState;
+  space_label: string;
+  transfer_hops: number;
+  settlement_minutes: number;
   affordable: boolean;
   confidence: number;
   flags: string[];
+  reason: string;
+  gates: Gate[];
+  currency?: string | null;
+}
+
+export interface GatedSummaryEntry {
+  requirement: string;
+  kind: string;
+  routes: number;
+  annual_fee_usd?: number | null;
+  approval_days?: number | null;
+}
+
+export interface LayerCoverage {
+  eligible_providers: string[];
+  attempts: number;
+  queried: boolean;
+  quotes: number;
+  skipped: Record<string, number>;
+  degraded: boolean;
 }
 
 export interface QuoteResult {
   route: string;
   verdict?: string;
   rationale?: string;
+  /** The RULE that produced the label, in words. */
+  reason?: string;
   flags?: string[];
-  fare_cents?: number;
+  /** True when no market fare existed — cpp is omitted, everything else stands. */
+  degraded?: boolean;
+  fare_cents?: number | null;
   fare_flags?: string[];
-  portal_cpp?: number;
-  best_transfer?: {
-    label: string;
-    cpp: number;
-    source_points: number;
-    flags: string[];
+  portal_cpp?: number | null;
+  /** False means NO availability source ran. Do not render as "no seats". */
+  space_checked?: boolean;
+  award_space?: {
+    confirmed: Array<{
+      program: string;
+      miles: number;
+      seats_available: number;
+      carrier?: string | null;
+    }>;
+    checked_none: string[];
+    unknown: string[];
   };
+  best_transfer?: PathOption;
   options?: PathOption[];
+  /** §6.3 — never hidden, shown separately as "3 routes require a … card ›". */
+  gated_options?: PathOption[];
+  gated_summary?: GatedSummaryEntry[];
+  /** The list is capped at 10; say how many were considered. */
+  options_considered?: number;
+  options_shown?: number;
+  carriers_serving?: string[];
+  coverage?: Record<string, LayerCoverage>;
   live_award_space?: Array<{
     program: string;
     miles: number;
