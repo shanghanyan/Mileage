@@ -124,8 +124,137 @@ def _hotel_programs(data: dict[str, Any]) -> set[str]:
     return {p for p in out if p}
 
 
+def _alliance_of_program(data: dict[str, Any]) -> dict[str, dict[str, set[str]]]:
+    """program -> {file: {alliance_id, ...}} across every file asserting membership.
+
+    The value is a SET, not a string. A program listed in two rosters inside the
+    same file is itself the error being hunted — the first version of this
+    function stored a bare string, so the second roster silently overwrote the
+    first and a program in both `oneworld` and `independent` looked consistent.
+    """
+    out: dict[str, dict[str, set[str]]] = {}
+
+    def note(program: Any, alliance: Any, where: str) -> None:
+        if not program or not alliance:
+            return
+        out.setdefault(str(program), {}).setdefault(where, set()).add(str(alliance))
+
+    for aid, spec in ((data.get("alliances.yaml") or {}).get("alliances") or {}).items():
+        if isinstance(spec, dict):
+            for program in spec.get("programs") or []:
+                note(program, aid, "alliances.yaml")
+
+    for program, spec in ((data.get("partners.yaml") or {}).get("currencies") or {}).items():
+        if isinstance(spec, dict):
+            note(program, spec.get("alliance"), "partners.yaml")
+
+    for _cid, spec in ((data.get("carriers.yaml") or {}).get("carriers") or {}).items():
+        if isinstance(spec, dict):
+            note(spec.get("program"), spec.get("alliance"), "carriers.yaml")
+
+    for program, spec in ((data.get("charts.yaml") or {}).get("programs") or {}).items():
+        if isinstance(spec, dict):
+            note(program, spec.get("alliance"), "charts.yaml")
+
+    return out
+
+
+def _check_alliance_consistency(data: dict[str, Any]) -> list[SnapshotIssue]:
+    """Alliance membership must agree across every file that claims it.
+
+    Membership is not decorative: partners.yaml grants a currency booking
+    rights on every carrier in its alliance, so one wrong word here invents
+    itineraries. Listing Aer Lingus AerClub as `oneworld` gave it rights on all
+    ~15 oneworld carriers and put "Avios -> AerClub on American Airlines" at the
+    top of four routes in a twelve-day sweep — a redemption that cannot be
+    booked, ranked #1, with no flag on it.
+
+    This does not attempt to know the real-world rosters; asserting those is a
+    human's job (see docs/KNOWN_WORLD.md). It enforces the weaker property a
+    machine CAN check: the four files never disagree, so a correction applied
+    to one of them can't leave the other three quietly wrong.
+    """
+    issues: list[SnapshotIssue] = []
+    for program, by_file in sorted(_alliance_of_program(data).items()):
+        for where, claimed in sorted(by_file.items()):
+            if len(claimed) > 1:
+                issues.append(
+                    SnapshotIssue(
+                        "integrity",
+                        f"alliance membership for {program!r}",
+                        f"{where} lists it in {len(claimed)} alliances at once: "
+                        + ", ".join(sorted(claimed)),
+                    )
+                )
+        across = {a for claimed in by_file.values() for a in claimed}
+        if len(across) > 1:
+            detail = ", ".join(
+                f"{f} says {'/'.join(sorted(a))}" for f, a in sorted(by_file.items())
+            )
+            issues.append(
+                SnapshotIssue(
+                    "integrity",
+                    f"alliance membership for {program!r}",
+                    f"files disagree — {detail}",
+                )
+            )
+    return issues
+
+
+def _check_alliance_provenance(data: dict[str, Any]) -> list[SnapshotIssue]:
+    """Every alliance roster must carry a source + verified_at.
+
+    A roster with no provenance cannot be vetted, and an un-vettable claim is
+    how a program sits in the wrong alliance for months. Membership changes are
+    real and regular (SAS moved Star -> SkyTeam in 2024; Oman Air joined
+    oneworld in 2025), so the roster needs a date attached like every other
+    record in the Known World.
+    """
+    issues: list[SnapshotIssue] = []
+    for aid, spec in ((data.get("alliances.yaml") or {}).get("alliances") or {}).items():
+        if not isinstance(spec, dict):
+            continue
+        for key in ("source", "verified_at"):
+            if not spec.get(key):
+                issues.append(
+                    SnapshotIssue(
+                        "integrity",
+                        f"alliances.yaml {aid}",
+                        f"roster has no {key!r} — membership cannot be vetted",
+                    )
+                )
+    return issues
+
+
+def _check_carrier_ids_are_iata(data: dict[str, Any]) -> list[SnapshotIssue]:
+    """Carrier keys must be 2-character IATA codes.
+
+    `carriers.yaml` was keyed `JAL` for Japan Airlines while every other entry
+    used IATA (`BA`, `AA`, `QF`). Internally consistent, so nothing caught it —
+    but the id is what an award provider's `operating_carrier` field gets
+    matched against, and live feeds emit `JL`. The mismatch would silently fail
+    to resolve exactly the carrier the flagship HND-ITM demo depends on.
+    """
+    issues: list[SnapshotIssue] = []
+    for cid in (data.get("carriers.yaml") or {}).get("carriers") or {}:
+        code = str(cid)
+        if len(code) != 2 or not code.isalnum() or not code.isupper():
+            issues.append(
+                SnapshotIssue(
+                    "integrity",
+                    "carriers.yaml",
+                    f"carrier id {code!r} is not a 2-character uppercase IATA "
+                    "code; live providers key on IATA and will not match it",
+                )
+            )
+    return issues
+
+
 def _check_integrity(data: dict[str, Any]) -> list[SnapshotIssue]:
     issues: list[SnapshotIssue] = []
+    issues.extend(_check_alliance_consistency(data))
+    issues.extend(_check_alliance_provenance(data))
+    issues.extend(_check_carrier_ids_are_iata(data))
 
     charts = (data.get("charts.yaml") or {}).get("programs") or {}
     alliances_raw = (data.get("alliances.yaml") or {}).get("alliances") or {}

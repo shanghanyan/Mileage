@@ -36,7 +36,12 @@ def _option_to_dict(o: PathOption) -> dict:
         "space_label": o.space.label,
         "transfer_hops": o.transfer_hops,
         "settlement_minutes": o.settlement_minutes,
+        # source_points = award_miles / effective_ratio. Emitted so a reader can
+        # re-derive the headline number instead of trusting it.
+        "hop_ratios": [round(r, 6) for r in o.hop_ratios],
+        "effective_ratio": o.effective_ratio,
         "affordable": o.affordable,
+        "shortfall_points": o.shortfall_points or None,
         "confidence": o.confidence,
         "flags": o.flags,
         "reason": o.reason,
@@ -115,6 +120,14 @@ def quote_result_to_dict(result: dict) -> dict:
     # list read as an exhaustive one.
     out["options_considered"] = result.get("options_considered")
     out["options_shown"] = result.get("options_shown")
+    # Priced, then dropped for exceeding the reach multiple. A count, because a
+    # dropped row nobody counts is indistinguishable from one that never
+    # existed — which is how a route with 8 valid quotes reported "no bookable
+    # option" for twelve days.
+    out["options_out_of_reach"] = result.get("options_out_of_reach") or 0
+    # §4.1 requirements anyone can satisfy: open a card, open an airline
+    # account. Never a filter, always reported.
+    out["easy_unlocks"] = result.get("easy_unlocks") or []
 
     out["options"] = [_option_to_dict(o) for o in verdict.options]
     # §6.3 — never hidden, just separated so the UI can offer them as

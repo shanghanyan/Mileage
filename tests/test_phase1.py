@@ -39,6 +39,7 @@ from mileage.providers.base import Query
 from mileage.verify.crosscheck import verify_award_quotes
 from mileage.verify.trust import spread, trust_weighted_median
 from mileage.cli import run_quote
+from conftest import requires_award_api
 
 _CONFIG = Config()
 _KNOWLEDGE = _CONFIG.knowledge_dir
@@ -50,8 +51,14 @@ def _aggregator() -> AggregatorProvider:
     )
 
 
+@requires_award_api
 def test_aggregator_parses_live_award_space() -> None:
-    """Scraped fixtures -> live AwardQuotes with seats and no no_live_space."""
+    """Scraped fixtures -> live AwardQuotes with seats and no no_live_space.
+
+    Gated on a real award provider. Without SEATS_AERO_API_KEY the only rows
+    this can find are the two hardcoded fixture entries, so a green result
+    proves the parser works and nothing whatsoever about award availability.
+    """
     agg = _aggregator()
     route = Route("LAX", "IST", Cabin.BUSINESS)
     quotes = [q for q in agg.fetch(Query(route, Layer.AWARD)) if isinstance(q, AwardQuote)]
@@ -305,8 +312,13 @@ def test_roundtrip_award_normalized_to_one_way() -> None:
     assert "rt_to_ow_normalized" in flags
 
 
+@requires_award_api
 def test_demo_b_verdict_best_with_live_space() -> None:
-    """End-to-end: Demo B is `best` and its winner carries verified live space."""
+    """End-to-end: Demo B is `best` and its winner carries verified live space.
+
+    Gated: "carries verified live space" is only a meaningful claim when a live
+    award provider is configured. See tests/conftest.py.
+    """
     registry = build_registry(_CONFIG)
     route = Route("LAX", "IST", Cabin.BUSINESS)
     user = User(balances={"capital_one": 90000}, card="venture_x")

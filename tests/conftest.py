@@ -60,3 +60,36 @@ try:
     _obs._enabled = False  # noqa: SLF001
 except Exception:
     pass
+
+
+# --------------------------------------------------------------------------- #
+# Award-space claims require a real award-space provider
+# --------------------------------------------------------------------------- #
+# The ONLY live L3 source wired into this repo is seats.aero
+# (providers/seats_aero.py), and its `health()` reports DOWN without
+# SEATS_AERO_API_KEY. What remains in offline mode is
+# knowledge/fixtures/milefeed.rss + starnet_award_space.json — between them two
+# hardcoded rows (Turkish LAX-IST business, LifeMiles LAX-JFK economy).
+#
+# A twelve-day sweep reported `no_space` on ~88 of 92 displayed options and it
+# read as "award space is scarce". It was not: nothing was configured to look.
+# Any test asserting that space WAS found is therefore asserting on a two-row
+# demo fixture, and passes for reasons unrelated to whether the engine can
+# actually see award inventory.
+#
+# So: positive space claims are skipped unless a real provider is configured.
+# The inverse checks — that the engine never reports `no_space` for something
+# it did not query — are NOT gated. Those are safety properties that must hold
+# precisely when no provider is available.
+import pytest as _pytest
+
+AWARD_API_CONFIGURED = bool(os.environ.get("SEATS_AERO_API_KEY"))
+
+requires_award_api = _pytest.mark.skipif(
+    not AWARD_API_CONFIGURED,
+    reason=(
+        "no live award-space provider: SEATS_AERO_API_KEY is unset, so the only "
+        "L3 data available is a 2-row offline fixture. A pass here would say "
+        "nothing about real award availability."
+    ),
+)

@@ -44,7 +44,13 @@ from . import obs
 from .domain.fuel import fuel_matrix
 from .domain.geo import airports
 from .knowledge_snapshot import snapshot_version
-from .domain.rank import MAX_RESULTS, partition_gated, rank_options
+from .domain.rank import (
+    MAX_RESULTS,
+    REACH_MULTIPLE,
+    acquirable_gate_summary,
+    partition_gated,
+    rank_options,
+)
 from .domain.service import (
     partner_rights,
     reachable_programs_for_route,
@@ -177,12 +183,18 @@ def run_quote(
     currencies: Optional[list[str]] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    reach_multiple: float = REACH_MULTIPLE,
 ) -> dict:
     """Run a quote for one primary currency, optionally ranking a multi-wallet.
 
     When ``currencies`` is set (or the user holds multiple balances and the
     primary is ``"all"``), every held transferable currency is ranked and
     merged so we can answer "Cap One vs Chase — which wins?".
+
+    ``reach_multiple`` caps how far past the balance a row may sit and still be
+    shown (default 1.5x; see domain/rank.py). Pass ``math.inf`` to show every
+    priced option regardless of cost — what the daily sweep does, because a
+    sweep exists to observe the engine's full output, not to advise a user.
     """
     config = config or Config.from_env()
 
@@ -416,16 +428,25 @@ def run_quote(
             # full list lets the result report how many options were considered
             # versus shown — a silent truncation reads as "that's everything"
             # when it isn't.
-            ranked_all = rank_options(
-                open_rows, balance_by_currency=balances, limit=10_000
+            ranked_all, out_of_reach = rank_options(
+                open_rows,
+                balance_by_currency=balances,
+                limit=10_000,
+                reach_multiple=reach_multiple,
             )
             options = ranked_all[:MAX_RESULTS]
-            gated = rank_options(
+            gated, _ = rank_options(
                 gated_rows,
                 balance_by_currency=balances,
                 drop_unaffordable=False,
                 limit=MAX_RESULTS,
             )
+            # §4.1 — requirements anyone can satisfy (open a card, open an
+            # airline account) are reported at the top level, never used to
+            # filter. Computed over the FULL ranked list, not the top 10, so a
+            # route that a new Iberia Plus account unlocks is still named even
+            # when it ranks eleventh.
+            easy_unlocks = acquirable_gate_summary(ranked_all + gated)
             transfers = [o for o in options if o.kind == "transfer"]
             if portal is None:
                 portal = next((o for o in options if o.kind == "portal"), None)
@@ -501,6 +522,11 @@ def run_quote(
         # capped list is never mistaken for an exhaustive one.
         "options_considered": len(ranked_all),
         "options_shown": len(options),
+        # Priced, then dropped for costing more than 1.5x the balance. Counted
+        # rather than discarded so "no bookable option" can never again mean
+        # "every option was too expensive and we didn't say so".
+        "options_out_of_reach": out_of_reach,
+        "easy_unlocks": easy_unlocks,
         "ranked_all": ranked_all,
         "snapshot": snapshot_version(config.knowledge_dir),
         "awards": vawards,

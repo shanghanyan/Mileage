@@ -13,6 +13,9 @@
 alliances:
   star_alliance:
     name: Star Alliance
+    source: "Star Alliance member airlines list"
+    url: https://www.staralliance.com/en/member-airlines
+    verified_at: "2026-08-18"
     programs:
       - aeroplan          # Air Canada
       - united            # United MileagePlus
@@ -22,8 +25,7 @@ alliances:
       - krisflyer         # Singapore
       - eva               # EVA Infinity MileageLands
       - asiana            # Asiana Club
-      - swiss             # Miles & More (LX)
-      - lufthansa         # Miles & More (LH)
+      - lufthansa         # Miles & More — the shared LH/LX/OS/SN/OU/LO ledger
       - copa              # ConnectMiles
       - air_china         # Phoenix Miles
       - air_india         # Maharaja Club
@@ -31,33 +33,58 @@ alliances:
       - egyptair          # EgyptAir Plus
       - thai              # Royal Orchid Plus
       - tap               # Miles&Go
-      - sas               # EuroBonus
       - air_new_zealand   # Airpoints
+      # SAS is NOT here. It left Star Alliance on 2024-08-31 and joined SkyTeam
+      # on 2024-09-01. It sat in this roster regardless, which made SAS metal
+      # bookable with Aeroplan/United/Turkish miles and unbookable with
+      # Flying Blue/Delta — exactly backwards. See the skyteam roster below.
+      - aegean            # Miles+Bonus
+      - brussels          # Miles & More (SN)
+      - croatia           # Miles & More (OU)
+      - lot               # Miles & More (LO)
+      - shenzhen          # PhoenixMiles (ZH)
+      - south_african     # Voyager
+      - ita               # Volare — joined Star Alliance 2026-04
+      # Asiana remains a member until 2024-12-17 -> 2026-12-17, when it fully
+      # merges into Korean Air and moves to SkyTeam. Revisit before that date.
 
   skyteam:
     name: SkyTeam
+    source: "SkyTeam member airlines list"
+    url: https://www.skyteam.com/en/about/our-members
+    verified_at: "2026-08-18"
     programs:
       - flying_blue       # Air France / KLM
       - delta             # SkyMiles
-      - virgin_atlantic   # Flying Club (SkyTeam partner awards via AF/KL)
+      - virgin_atlantic   # Flying Club — full member since 2023
       - aeromexico        # Club Premier
       - korean            # SKYPASS
       - china_eastern     # Eastern Miles
       - garuda            # GarudaMiles
       - saudi             # Alfursan
       - mea               # Cedar Miles
-      - aeroflot          # Aeroflot Bonus
-      - china_airlines    # Dynasty Flyer (SkyTeam)
+      - china_airlines    # Dynasty Flyer
       - vietnam           # Lotusmiles
       - kenya             # Asante Rewards
-      - tarom             # Flying Blue (codeshare member)
+      - tarom             # Flying Blue (TAROM is a full SkyTeam member)
+      - sas               # EuroBonus — MOVED here from Star Alliance 2024-09-01
+      - aerolineas_argentinas  # Aerolineas Plus
+      - air_europa        # SUMA
+      - xiamen            # Egret Club
+      # Aeroflot is NOT listed. SkyTeam suspended it in 2022 following the
+      # invasion of Ukraine; it cannot fulfil membership obligations under
+      # sanctions. A suspended member grants no bookable partner rights, and
+      # listing it as active would let the engine route redemptions onto metal
+      # nobody can actually ticket.
 
   oneworld:
     name: oneworld
+    source: "oneworld member airlines list"
+    url: https://www.oneworld.com/members
+    verified_at: "2026-08-18"
     programs:
       - avios             # British Airways Executive Club (Avios)
       - iberia_plus       # Iberia Plus (Avios family — separate ledger + chart)
-      - aer_lingus_aerclub  # Aer Lingus AerClub (Avios family)
       - american          # AAdvantage
       - alaska            # Mileage Plan
       - cathay_pacific    # Asia Miles
@@ -75,7 +102,19 @@ alliances:
   # Non-aligned / independent programs we still track for transfers.
   independent:
     name: Independent
+    source: "Non-aligned by definition — membership in no global alliance"
+    verified_at: "2026-08-18"
     programs:
+      # Aer Lingus LEFT oneworld in 2007 and never rejoined. AerClub is an
+      # Avios-family ledger with BILATERAL booking rights, not alliance-wide
+      # ones: reward flights on Aer Lingus, British Airways and American, plus
+      # the IAG/AJB transatlantic joint business (adds Iberia and Finnair).
+      # AerClub members do NOT get universal oneworld redemption.
+      #
+      # Listing it as oneworld gave it booking rights on all ~15 oneworld
+      # carriers, which is how "Avios -> Aer Lingus AerClub [oneworld] on
+      # Qantas" became rankable. See partners.yaml for the real carrier list.
+      - aer_lingus_aerclub  # Aer Lingus AerClub (Avios family, non-aligned)
       - emirates          # Skywards
       - etihad            # Guest
       - jetblue           # TrueBlue

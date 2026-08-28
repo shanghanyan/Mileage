@@ -116,7 +116,7 @@ airport_taxes:
 matrix:
   # --- Avios family ------------------------------------------------------- #
   # The reason this file exists. Same balance, opposite outcomes.
-  - { currency: avios, carrier: JAL, policy: minimal,
+  - { currency: avios, carrier: JL, policy: minimal,
       note: "JAL levies token surcharges on Avios awards — the short-haul sweet spot" }
   - { currency: avios, carrier: AA, policy: none }
   - { currency: avios, carrier: AS, policy: none }
@@ -133,7 +133,7 @@ matrix:
 
   - { currency: iberia_plus, carrier: IB, policy: moderate }
   - { currency: iberia_plus, carrier: BA, policy: passes_full }
-  - { currency: iberia_plus, carrier: JAL, policy: minimal }
+  - { currency: iberia_plus, carrier: JL, policy: minimal }
   - { currency: iberia_plus, carrier: AA, policy: none }
   - { currency: iberia_plus, carrier: "*", policy: moderate }
 
@@ -188,7 +188,7 @@ matrix:
 
   - { currency: cathay_pacific, carrier: CX, policy: moderate }
   - { currency: cathay_pacific, carrier: AA, policy: none }
-  - { currency: cathay_pacific, carrier: JAL, policy: minimal }
+  - { currency: cathay_pacific, carrier: JL, policy: minimal }
   - { currency: cathay_pacific, carrier: "*", policy: moderate }
 
   - { currency: qatar, carrier: QR, policy: moderate }
@@ -197,14 +197,14 @@ matrix:
 
   - { currency: qantas, carrier: QF, policy: moderate }
   - { currency: qantas, carrier: AA, policy: none }
-  - { currency: qantas, carrier: JAL, policy: minimal }
+  - { currency: qantas, carrier: JL, policy: minimal }
   - { currency: qantas, carrier: "*", policy: moderate }
 
   - { currency: finnair, carrier: AY, policy: moderate }
   - { currency: finnair, carrier: BA, policy: passes_full }
   - { currency: finnair, carrier: "*", policy: moderate }
 
-  - { currency: japan_airlines, carrier: JAL, policy: minimal }
+  - { currency: japan_airlines, carrier: JL, policy: minimal }
   - { currency: japan_airlines, carrier: BA, policy: passes_full }
   - { currency: japan_airlines, carrier: "*", policy: minimal }
 
@@ -240,7 +240,6 @@ matrix:
   - { currency: kenya, carrier: "*", policy: minimal }
   - { currency: sas, carrier: "*", policy: moderate }
   - { currency: tap, carrier: "*", policy: moderate }
-  - { currency: swiss, carrier: "*", policy: passes_full }
 
 # Fallback when a (currency, carrier) pair is absent entirely. Deliberately
 # `moderate` rather than `none`: guessing zero understates the bill and makes an

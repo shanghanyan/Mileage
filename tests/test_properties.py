@@ -84,29 +84,62 @@ def test_snapshot_hash_is_stable_and_content_addressed() -> None:
 # --------------------------------------------------------------------------- #
 def test_list_never_exceeds_ten() -> None:
     opts = [_option(label=f"r{i}", source_points=1000 * i) for i in range(1, 40)]
-    assert len(rank_options(opts, balance_by_currency={"capital_one": 10**9})) <= MAX_RESULTS
+    ranked, _ = rank_options(opts, balance_by_currency={"capital_one": 10**9})
+    assert len(ranked) <= MAX_RESULTS
 
 
 def test_first_class_never_ranks_below_business() -> None:
     first = _option(label="first", cabin=Cabin.FIRST.value, source_points=90_000)
     business = _option(label="biz", cabin=Cabin.BUSINESS.value, source_points=1_000)
-    ranked = rank_options([business, first], balance_by_currency={"capital_one": 10**9})
+    ranked, _ = rank_options([business, first], balance_by_currency={"capital_one": 10**9})
     assert ranked[0].cabin == Cabin.FIRST.value, (
         "cabin class dominates every other criterion (§6.1 step 1)"
     )
 
 
-def test_no_route_exceeds_the_users_balance() -> None:
+def test_routes_beyond_the_reach_multiple_are_dropped_but_counted() -> None:
+    """Out of reach is a number, not a silence.
+
+    JFK-JNB printed "no bookable option" while 8 chart rows priced it at
+    105k-115k against a 100k balance. Dropping is fine; dropping without
+    counting is what made a too-expensive route look like a nonexistent one.
+    """
     opts = [_option(label=f"r{i}", source_points=p) for i, p in enumerate([5_000, 50_000])]
-    ranked = rank_options(opts, balance_by_currency={"capital_one": 10_000})
-    assert all(o.source_points <= 10_000 for o in ranked)
+    ranked, out_of_reach = rank_options(opts, balance_by_currency={"capital_one": 10_000})
+    assert [o.source_points for o in ranked] == [5_000]
+    assert out_of_reach == 1, "the 50k row must be counted, not silently discarded"
+
+
+def test_reach_band_is_shown_and_names_its_shortfall() -> None:
+    """Within 1.5x balance the row survives and says how short it falls."""
+    opts = [_option(label="reach", source_points=14_000)]
+    ranked, out_of_reach = rank_options(opts, balance_by_currency={"capital_one": 10_000})
+    assert out_of_reach == 0
+    assert len(ranked) == 1
+    assert ranked[0].affordable is False
+    assert ranked[0].shortfall_points == 4_000
+    assert "4,000 pts short" in ranked[0].reason
+
+
+def test_affordable_rows_always_outrank_reach_rows() -> None:
+    """A reach row must never displace something the user can actually book."""
+    # Distinct programs/metal — otherwise these are two prices for ONE booking
+    # and collapse_dominated correctly folds the worse one away before ranking.
+    reach = _option(
+        label="reach", source_points=11_000, program="avios", operating_carrier="BA"
+    )
+    afford = _option(
+        label="afford", source_points=9_000, program="turkish", operating_carrier="TK"
+    )
+    ranked, _ = rank_options([reach, afford], balance_by_currency={"capital_one": 10_000})
+    assert [o.label for o in ranked] == ["afford", "reach"]
 
 
 def test_heavy_cash_is_demoted_below_cheap_cash() -> None:
     cheap = _option(label="cheap", source_points=70_000, price_paid_cents=500)
     heavy = _option(label="heavy", source_points=60_000,
                     price_paid_cents=int(HIGH_FUEL_USD * 100) + 30_000)
-    ranked = rank_options([heavy, cheap], balance_by_currency={"capital_one": 10**9})
+    ranked, _ = rank_options([heavy, cheap], balance_by_currency={"capital_one": 10**9})
     assert ranked[0].label == "cheap", (
         "a 60k-point route carrying heavy surcharges must not outrank a "
         "70k-point route carrying almost none (§6.1 step 2)"
@@ -138,9 +171,9 @@ def test_different_metal_is_never_collapsed() -> None:
 
 def test_ranking_is_deterministic() -> None:
     opts = [_option(label=f"r{i}", source_points=10_000) for i in range(8)]
-    a = [o.label for o in rank_options(opts, balance_by_currency={"capital_one": 10**9})]
+    a = [o.label for o in rank_options(opts, balance_by_currency={"capital_one": 10**9})[0]]
     b = [o.label for o in rank_options(list(reversed(opts)),
-                                       balance_by_currency={"capital_one": 10**9})]
+                                       balance_by_currency={"capital_one": 10**9})[0]]
     assert a == b, "ranking must not depend on input order"
 
 

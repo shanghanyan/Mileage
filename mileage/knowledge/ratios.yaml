@@ -35,6 +35,16 @@ partners:
   etihad: 1.0
   qantas: 1.0
   finnair: 1.0        # Finnair Plus (oneworld) — Cap One partner
+  qatar: 1.0          # Qatar Privilege Club (oneworld)
+  tap: 1.0            # TAP Miles&Go (Star Alliance)
+  japan_airlines: 0.75  # JAL Mileage Bank at 4:3 — NOT 1:1.
+                      # Added 2026-08-18. Its absence was load-bearing in the
+                      # wrong direction: JAL has a chart in this repo and the
+                      # HND-ITM thesis route is *about* the JAL Avios band, yet
+                      # Capital One could not reach JAL Mileage Bank directly
+                      # at all. Every Cap One route onto JAL metal had to
+                      # detour through the Avios family, which prices a
+                      # different chart. A missing ratio is a silent dead end.
 
 # --- Additional transferable currencies (Phase 7 data-only expansion, §13) ---
 # Each block is the same shape as the capital_one block above and is loaded by
@@ -75,9 +85,15 @@ currencies:
       emirates: 0.8         # confirmed 5:4 on Emirates' own ATF chart page
       etihad: 1.0
       qantas: 1.0
-      finnair: 1.0
       qatar: 1.0         # Privilege Club (oneworld)
+      iberia_plus: 1.0   # Iberia Plus — its own ledger and chart
+      aer_lingus_aerclub: 1.0  # Aer Lingus AerClub
+      delta: 1.0         # Amex is Delta's co-brand issuer
+      jetblue: 0.8       # JetBlue TrueBlue transfers at 1:0.8, not 1:1
       marriott_bonvoy: 1.0  # Amex → Marriott (hotel bank; then program_transfers)
+      # REMOVED 2026-08-18: `finnair`. Finnair Plus is a Capital One partner,
+      # not an Amex one. Amex's airline list is seventeen and Finnair is not on
+      # it. Same failure mode as the Chase→Etihad row above: a fabricated edge.
 
   - from_currency: chase_ur
     source: "The Points Guy — Chase Ultimate Rewards transfer partners"
@@ -96,11 +112,22 @@ currencies:
       flying_blue: 1.0
       virgin_atlantic: 1.0
       avios: 1.0
-      etihad: 1.0
-      united: 1.0        # Chase → United MileagePlus (added mid-2020s; confirm)
+      united: 1.0        # Chase → United MileagePlus
       hyatt: 1.0         # Chase → World of Hyatt
       marriott_bonvoy: 1.0
       iberia_plus: 1.0   # Iberia Plus — own ledger + own chart in the Avios family
+      aer_lingus_aerclub: 1.0  # Aer Lingus AerClub — third Avios ledger
+      jetblue: 1.0       # JetBlue TrueBlue
+      # REMOVED 2026-08-18: `etihad`. Etihad Guest is an AMEX and Capital One
+      # partner, NOT a Chase one — Chase's airline list is exactly ten:
+      # Aer Lingus, Air Canada, Air France/KLM, British Airways, Iberia,
+      # JetBlue, Singapore, Southwest, United, Virgin Atlantic. A ratio that
+      # does not exist is worse than a missing one: it invents a whole branch
+      # of the transfer graph and prices seats nobody can buy.
+      #
+      # Deliberately absent: southwest (no chart, so it can never terminate a
+      # redeem edge), ihg / wyndham (hotel partners with no onward airline
+      # edge modelled).
 
   - from_currency: citi_typ
     source: "Award Travel Finder — Citi ThankYou Points transfer partners"
@@ -123,13 +150,23 @@ currencies:
       # added this session — the widest reach of any card in this file.
       flying_blue: 1.0
       virgin_atlantic: 1.0
-      avios: 1.0
       cathay_pacific: 1.0
-      emirates: 0.8       # confirmed 5:4 on Emirates' own ATF chart page
+      emirates: 0.8       # confirmed 1:0.8 — the one non-1:1 Citi airline
       etihad: 1.0
       qantas: 1.0
       qatar: 1.0
       thai: 1.0
+      jetblue: 1.0
+      american: 1.0      # AAdvantage. Citi is the ONLY bank that transfers to
+                         # American — no other currency in this file can reach
+                         # the AA chart directly, which makes this edge unique
+                         # rather than merely missing.
+      # REMOVED 2026-08-18: `avios`. Citi has no direct British Airways edge.
+      # The real path is Citi -> Qatar Privilege Club -> Avios, and
+      # alliances.yaml already carries that `qatar -> avios` 1:1 hop, so the
+      # graph reaches BA correctly WITHOUT this row — one transfer later and
+      # with the Qatar account step surfaced, which is the truth. The fake
+      # direct edge made the same seat look one hop cheaper than it is.
 
   - from_currency: bilt
     source: "Bilt Rewards — official transfer partners list"
@@ -152,8 +189,19 @@ currencies:
       emirates: 1.0       # Bilt is Emirates' only remaining 1:1 partner per its own page
       etihad: 1.0
       united: 1.0
-      alaska: 1.0
+      alaska: 1.0         # the only US transferable currency reaching Alaska 1:1
       hyatt: 1.0
+      # Added 2026-08-18 — all present on Bilt's 19-airline list, all 1:1, and
+      # all with charts in this repo, so each was a reachable redemption the
+      # engine simply could not see.
+      american: 1.0
+      iberia_plus: 1.0
+      japan_airlines: 1.0
+      qatar: 1.0
+      aer_lingus_aerclub: 1.0
+      tap: 1.0
+      # Every Bilt airline partner transfers 1:1 — there is no reduced-ratio
+      # exception to model here.
 
   - from_currency: wells_fargo
     source: "The Points Guy — Wells Fargo Rewards transfer partners"

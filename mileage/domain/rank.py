@@ -26,9 +26,22 @@ from datetime import date
 from typing import Iterable, Optional
 
 from .fuel import HIGH_FUEL_USD
-from .models import CLASS_RANK, AwardSpace, PathOption
+from .models import CLASS_RANK, AwardSpace, GateKind, PathOption
 
 MAX_RESULTS = 10
+
+# How far past the user's balance a route may sit and still be worth showing.
+# 1.5x means "you hold 100k, we will show you a 150k route and name the gap".
+#
+# Dropping everything above the balance was silent AND wrong in both directions:
+# a route needing 4% more points vanished with no trace, while JFK-JNB reported
+# "no bookable option" when in fact 8 chart rows priced it and every one landed
+# at 105k-115k against a 100k balance. "Nothing exists" and "you are 5k short"
+# are opposite answers and were rendering identically.
+#
+# The cap exists because a 400k route is not advice, it is noise. Everything
+# above it is COUNTED, never silently discarded.
+REACH_MULTIPLE = 1.5
 
 
 def _cabin_rank(option: PathOption) -> int:
@@ -156,8 +169,47 @@ def explain(option: PathOption, *, as_of: Optional[date] = None) -> str:
     for gate in option.gates:
         bits.append(gate.describe())
     if not option.affordable:
-        bits.append("more points than you hold")
+        # Name the gap. "More points than you hold" is true of a 5,000-point
+        # shortfall and a 300,000-point one, and the user's next move is
+        # completely different in each case.
+        if option.shortfall_points:
+            bits.append(
+                f"{option.shortfall_points:,} pts short — a reach, not unbookable"
+            )
+        else:
+            bits.append("more points than you hold")
     return " · ".join(bits)
+
+
+def acquirable_gate_summary(options: Iterable[PathOption]) -> list[dict]:
+    """Routes unlocked by something anyone can open — a card, a new account.
+
+    §4.1 already treats these as annotations rather than filters, so they never
+    move a row. But an annotation buried on row nine is not an answer; "this
+    trip opens up if you start an Iberia Plus account" is the useful output and
+    it has to be reported at the top level to be seen.
+    """
+    buckets: dict[tuple[str, str], dict] = {}
+    for opt in options:
+        for gate in opt.gates:
+            if gate.kind is GateKind.HARD:
+                continue  # a bank-tier requirement is not "easy to open"
+            key = (gate.kind.value, gate.describe())
+            entry = buckets.setdefault(
+                key,
+                {
+                    "kind": gate.kind.value,
+                    "requirement": gate.describe(),
+                    "program": gate.program_id,
+                    "card_ids": list(gate.card_ids),
+                    "annual_fee_usd": gate.annual_fee_usd,
+                    "approval_days": gate.approval_days,
+                    "min_days": gate.min_days,
+                    "routes": 0,
+                },
+            )
+            entry["routes"] += 1
+    return sorted(buckets.values(), key=lambda e: -e["routes"])
 
 
 def rank_options(
@@ -168,31 +220,57 @@ def rank_options(
     high_cash_usd: float = HIGH_FUEL_USD,
     limit: int = MAX_RESULTS,
     drop_unaffordable: bool = True,
-) -> list[PathOption]:
-    """Affordability filter → collapse dominated → §6.1 sort → top `limit`.
+    reach_multiple: float = REACH_MULTIPLE,
+) -> tuple[list[PathOption], int]:
+    """Affordability band → collapse dominated → §6.1 sort → top `limit`.
 
-    Affordability runs FIRST because §6.1's cabin-dominates rule is only safe
-    once unbookable rows are gone: otherwise a first-class route the user cannot
-    pay for would outrank every business-class route they can.
+    Returns `(ranked, out_of_reach_count)`. The count is the whole point: a
+    dropped row that nobody counts is indistinguishable from a row that never
+    existed, which is how "no bookable option" got printed for a route where
+    every candidate was priced correctly and merely cost more than the balance.
+
+    Three bands, not two:
+      affordable        source_points <= balance
+      reach             balance < source_points <= balance * reach_multiple
+                        — shown, sorted below affordable rows, shortfall named
+      out of reach      beyond that — dropped, but returned as a count
+
+    Affordability still orders before §6.1's cabin rule, so a first-class seat
+    the user cannot pay for can never outrank a business seat they can.
     """
     opts = list(options)
+    out_of_reach = 0
 
     if balance_by_currency is not None:
-        opts = [
-            replace(
-                o,
-                affordable=o.source_points
-                <= balance_by_currency.get(o.currency or "", 0),
+        priced: list[PathOption] = []
+        for o in opts:
+            balance = balance_by_currency.get(o.currency or "", 0)
+            affordable = o.source_points <= balance
+            shortfall = 0 if affordable else o.source_points - balance
+            if not affordable and drop_unaffordable:
+                if balance <= 0 or o.source_points > balance * reach_multiple:
+                    out_of_reach += 1
+                    continue
+            priced.append(
+                replace(o, affordable=affordable, shortfall_points=shortfall)
             )
-            for o in opts
-        ]
-    if drop_unaffordable:
-        opts = [o for o in opts if o.affordable]
+        opts = priced
 
     opts = collapse_dominated(opts)
-    opts.sort(key=lambda o: sort_key(o, high_cash_usd=high_cash_usd))
+    # Affordable rows first, then reach rows by how short they fall. Without
+    # this an unaffordable row could sort above an affordable one on points.
+    opts.sort(
+        key=lambda o: (
+            0 if o.affordable else 1,
+            o.shortfall_points,
+            sort_key(o, high_cash_usd=high_cash_usd),
+        )
+    )
     opts = opts[:limit]
-    return [replace(o, reason=o.reason or explain(o, as_of=as_of)) for o in opts]
+    return (
+        [replace(o, reason=o.reason or explain(o, as_of=as_of)) for o in opts],
+        out_of_reach,
+    )
 
 
 def partition_gated(
@@ -225,6 +303,8 @@ def partition_gated(
 
 __all__ = [
     "MAX_RESULTS",
+    "REACH_MULTIPLE",
+    "acquirable_gate_summary",
     "collapse_dominated",
     "dominates",
     "explain",

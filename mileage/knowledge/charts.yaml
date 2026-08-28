@@ -1396,7 +1396,9 @@ programs:
 
   aer_lingus_aerclub:
     name: Aer Lingus AerClub (Avios)
-    alliance: oneworld
+    # Non-aligned (left oneworld 2007). Booking rights are bilateral/AJB only —
+    # see partners.yaml. This chart prices EI/BA/AA/IB/AY metal, not oneworld.
+    alliance: independent
     trust: 0.55
     source: "Aer Lingus AerClub Avios transatlantic chart"
     url: https://www.aerlingus.com/aer-club/

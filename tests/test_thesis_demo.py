@@ -76,7 +76,7 @@ def test_same_currency_two_carriers_two_prices() -> None:
     short_haul = Route("HND", "ITM", Cabin.BUSINESS)
     transatlantic = Route("LHR", "JFK", Cabin.BUSINESS)
 
-    jal = price_paid("avios", "JAL", short_haul)
+    jal = price_paid("avios", "JL", short_haul)
     ba = price_paid("avios", "BA", transatlantic)
     aa = price_paid("avios", "AA", transatlantic)
 
@@ -141,7 +141,7 @@ def test_thesis_demo_jal_vs_ba_end_to_end() -> None:
     assert jal_rows, "no Avios route on Tokyo-Osaka"
     assert ba_rows, "no Avios route on London-New York"
 
-    on_jal = next(r for r in jal_rows if r.operating_carrier == "JAL")
+    on_jal = next(r for r in jal_rows if r.operating_carrier == "JL")
     on_ba = next(r for r in ba_rows if r.operating_carrier == "BA")
 
     assert on_jal.price_paid_usd < 50, f"expected tens of dollars, got {on_jal.price_paid_usd}"
@@ -150,7 +150,7 @@ def test_thesis_demo_jal_vs_ba_end_to_end() -> None:
     assert on_ba.fuel_policy == "passes_full"
 
     # The reason is stated, not implied — a user must be able to see WHY.
-    assert "JAL" in on_jal.reason or "Japan" in on_jal.reason
+    assert "JL" in on_jal.reason or "Japan" in on_jal.reason
     assert "demoted" in on_ba.reason
 
 
@@ -180,14 +180,28 @@ def test_ba_metal_ranks_below_a_cheaper_carrier_on_identical_points() -> None:
 # --------------------------------------------------------------------------- #
 # 3 — the structural claim: TRANSFER* → REDEEM really is a graph
 # --------------------------------------------------------------------------- #
-def test_multi_hop_route_appears_and_can_win() -> None:
-    """A >=2-hop transfer must be reachable, and able to beat a 1-hop route.
+def test_multi_hop_route_appears_and_beats_every_direct_route() -> None:
+    """A >=2-hop transfer must be reachable, and must WIN outright.
 
     Without airline→airline edges the graph can only ever emit `bank → airline
     → seat`, which is a lookup table with extra steps — and that is exactly what
     twelve days of sweep output contained.
+
+    Citi ThankYou is the currency that makes this a structural test rather than
+    a pricing accident. Citi has NO direct British Airways edge — its published
+    airline list does not include BA, and the only way Citi reaches Avios is
+    Citi → Qatar Privilege Club → Avios. So a correct engine has to walk two
+    airline→airline hops to find Citi's best LHR-JFK redemption, and a third to
+    reach the cheaper Iberia Plus chart beyond it.
+
+    This test previously used Chase and asserted only that the best multi-hop
+    beat the *worst* single-hop — which a lookup table could satisfy by
+    accident. It also broke the moment Chase gained its (real) direct Aer Lingus
+    AerClub edge, because the cheap route stopped needing two hops. Asserting
+    against the BEST single-hop, on a currency that structurally cannot reach
+    the winner directly, is the property actually worth pinning.
     """
-    run = _quote(Route("LHR", "JFK", Cabin.BUSINESS), "chase_ur", 300_000, "sapphire_reserve")
+    run = _quote(Route("LHR", "JFK", Cabin.BUSINESS), "citi_typ", 300_000, "venture_x")
     options = run["verdict"].options
     multi = [o for o in options if o.transfer_hops >= 2]
     assert multi, "no multi-hop route in the output at all"
@@ -196,9 +210,29 @@ def test_multi_hop_route_appears_and_can_win() -> None:
     best_multi = min(multi, key=lambda o: o.source_points)
     single = [o for o in options if o.kind == "transfer" and o.transfer_hops == 1]
     assert single, "expected single-hop routes to compare against"
-    assert best_multi.source_points < max(o.source_points for o in single), (
-        "the multi-hop path never beat a direct one — the graph earns nothing"
+    best_single = min(o.source_points for o in single)
+    assert best_multi.source_points < best_single, (
+        f"best multi-hop ({best_multi.source_points:,} pts via "
+        f"{best_multi.label}) did not beat the best direct transfer "
+        f"({best_single:,} pts) — the graph is earning nothing"
     )
+
+
+def test_citi_cannot_reach_avios_in_one_hop() -> None:
+    """Pins the structural fact the test above depends on.
+
+    Citi ThankYou does not transfer to British Airways. If someone re-adds that
+    ratio, the multi-hop test above would still pass while silently testing a
+    one-hop path, so the absence is asserted directly rather than assumed.
+    """
+    run = _quote(Route("LHR", "JFK", Cabin.BUSINESS), "citi_typ", 300_000, "venture_x")
+    for opt in run["verdict"].options:
+        if opt.program == "avios" and opt.kind == "transfer":
+            assert opt.transfer_hops >= 2, (
+                f"{opt.label} reaches Avios in {opt.transfer_hops} hop(s). Citi "
+                "has no direct British Airways edge — the real path is "
+                "Citi → Qatar → Avios."
+            )
 
 
 def test_account_age_gate_rides_along_on_a_multi_hop_path() -> None:

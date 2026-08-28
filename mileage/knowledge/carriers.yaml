@@ -29,7 +29,7 @@ default_intra_cabins: [economy, business]
 
 carriers:
   # ------------------------------------------------------------------ oneworld
-  JAL:
+  JL:
     name: Japan Airlines
     program: japan_airlines
     alliance: oneworld
@@ -64,7 +64,13 @@ carriers:
   EI:
     name: Aer Lingus
     program: aer_lingus_aerclub
-    alliance: oneworld          # value-partner for Avios purposes
+    # NOT oneworld — Aer Lingus left the alliance in 2007. It is IAG-owned and
+    # an Avios-family participant, which is a commercial relationship, not
+    # alliance membership. The previous `alliance: oneworld` (annotated
+    # "value-partner for Avios purposes") was a convenience fiction that the
+    # partner-rights resolver read literally and turned into alliance-wide
+    # booking rights. Real rights are enumerated in partners.yaml.
+    alliance: independent
     hubs: [DUB, MAN]
     serves: [europe, north_america]
     cabins: [economy, business]
@@ -159,7 +165,12 @@ carriers:
 
   LX:
     name: SWISS
-    program: swiss
+    # Miles & More, the same ledger LH and OS use — SWISS has no separate
+    # frequent-flyer currency. It was modelled as a distinct `swiss` program,
+    # which duplicated Miles & More under two ids: two sets of booking rights
+    # and two fuel-surcharge rows for one real program, silently disagreeing
+    # the moment either was edited.
+    program: lufthansa
     alliance: star_alliance
     hubs: [ZRH, GVA]
     serves: [europe, north_america, north_asia, southeast_asia, south_asia,
@@ -243,7 +254,11 @@ carriers:
   SK:
     name: SAS
     program: sas
-    alliance: star_alliance
+    # SkyTeam, not Star Alliance. SAS left Star on 2024-08-31 and joined
+    # SkyTeam on 2024-09-01. Getting this wrong inverts who can book SAS
+    # metal: it was reachable from Aeroplan/United/Turkish and unreachable
+    # from Flying Blue/Delta, which is precisely backwards.
+    alliance: skyteam
     hubs: [CPH, ARN, OSL]
     serves: [europe, north_america, north_asia]
     cabins: [economy, premium_economy, business]

@@ -30,19 +30,21 @@ currencies:
 
   iberia_plus:
     alliance: oneworld
-  aer_lingus_aerclub:
-    alliance: oneworld
-    excluded: [QF, MH]
-    note: AerClub's partner list is narrower than full oneworld.
   american:
     alliance: oneworld
     extra: [EY]
   alaska:
     alliance: oneworld
-    extra: [EK, LH, SQ, KE]
+    # LH REMOVED: Lufthansa is not, and was not, a Mileage Plan redemption
+    # partner. Alaska's only Lufthansa Group relationship is ITA Airways, added
+    # in Jan 2026 as EARN-only — you can collect Alaska miles on it, not spend
+    # them. Earn-only partners must never appear here: this file answers "who
+    # may I BOOK", and an earn partner listed as bookable invents itineraries.
+    extra: [EK, SQ, KE]
     note: >-
-      Mileage Plan keeps several non-oneworld partners from before it joined —
-      these are real and are why AS is often the cheapest way onto that metal.
+      Mileage Plan keeps several non-oneworld redemption partners from before it
+      joined — these are real and are why AS is often the cheapest way onto that
+      metal. Redemption partners only; earn-only partners are excluded by design.
   cathay_pacific:
     alliance: oneworld
   qatar:
@@ -71,7 +73,10 @@ currencies:
     extra: [EK]
   krisflyer:
     alliance: star_alliance
-    extra: [VS]
+    # VS REMOVED: same 2025-04-23 termination as the virgin_atlantic entry
+    # below. A partnership ending is bidirectional — leaving it on one side
+    # only would have let KrisFlyer book Virgin metal while Virgin could not
+    # book Singapore, an asymmetry that exists nowhere in reality.
   ana:
     alliance: star_alliance
     extra: [EK, VS]
@@ -82,10 +87,7 @@ currencies:
   thai:
     alliance: star_alliance
   lufthansa:
-    alliance: star_alliance
-  swiss:
-    alliance: star_alliance
-  sas:
+    # Miles & More. One entry, not one per operating carrier.
     alliance: star_alliance
   tap:
     alliance: star_alliance
@@ -109,9 +111,18 @@ currencies:
     alliance: skyteam
   virgin_atlantic:
     alliance: skyteam
-    extra: [NH, SQ]
-    note: Flying Club retains ANA and Singapore partnerships outside SkyTeam.
+    # SQ REMOVED: the Virgin Atlantic / Singapore Airlines partnership ended
+    # 2025-04-23 — no new reward bookings after that date. ANA survives and is
+    # still one of Flying Club's best redemptions. Flying Club's partner list
+    # has contracted sharply (Singapore and Hawaiian both gone), so this entry
+    # needs re-verifying more often than most.
+    extra: [NH]
+    note: Flying Club retains its ANA partnership outside SkyTeam.
   korean:
+    alliance: skyteam
+  sas:
+    # EuroBonus moved to SkyTeam on 2024-09-01. Listed here, not in the Star
+    # Alliance block above, so SAS metal prices from the right currencies.
     alliance: skyteam
   china_airlines:
     alliance: skyteam
@@ -127,9 +138,25 @@ currencies:
     alliance: skyteam
 
   # --- Independent --------------------------------------------------------- #
+  aer_lingus_aerclub:
+    alliance: independent
+    # Aer Lingus left oneworld in 2007. AerClub's redemption rights are
+    # bilateral, NOT alliance-wide: Aer Lingus, British Airways and American
+    # for reward flights, plus Iberia and Finnair through the IAG/American
+    # transatlantic joint business. Enumerated in full because `independent`
+    # grants nothing by default — which is the point. When this said
+    # `alliance: oneworld`, AerClub inherited booking rights on every oneworld
+    # carrier (Qantas, Cathay, JAL, Malaysia, …) and the engine ranked
+    # "Avios -> AerClub on Qantas" as a real, bookable itinerary.
+    extra: [EI, BA, AA, IB, AY]
+    note: >-
+      Bilateral + IAG/AJB joint-business rights only. AerClub members do not
+      get universal oneworld redemption or reciprocal tier benefits across the
+      full alliance.
+
   emirates:
     alliance: independent
-    extra: [EK, QF, AS, JAL]
+    extra: [EK, QF, AS, JL]
   etihad:
     alliance: independent
     extra: [EY, AA, VS]

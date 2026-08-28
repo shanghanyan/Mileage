@@ -410,6 +410,14 @@ class PathOption:
     transfer_hops: int = 0
     settlement_minutes: int = 0
     gates: list[Gate] = field(default_factory=list)
+    # Per-hop transfer ratios, in path order, and their product. `source_points`
+    # is `award_miles / effective_ratio`, so without these the headline number
+    # cannot be re-derived from the output — a 1:0.75 leg silently inflates the
+    # cost by a third and looked identical to a 1:1 leg in every log line.
+    hop_ratios: list[float] = field(default_factory=list)
+    effective_ratio: float = 1.0
+    # Points beyond the user's balance, when this row is shown as a reach.
+    shortfall_points: int = 0
     # Why this row ranks where it does / why it is or isn't the winner. The
     # sweep showed `best` vs `tentative_best` was not reconstructable from the
     # output — if a reader can't infer the rule from the data, neither can a

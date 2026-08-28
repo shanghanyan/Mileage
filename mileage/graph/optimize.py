@@ -66,17 +66,40 @@ def _portal_option(
     )
 
 
+def format_ratio(ratio: float) -> str:
+    """A transfer ratio as `1:N`, the form the programs themselves publish.
+
+    A path's point cost is the product of its hop ratios, so a label that omits
+    them shows a total nobody can re-derive: "Capital One -> Avios -> AerClub —
+    31,500 pts" is unfalsifiable without knowing each leg moved 1:1. A 1:0.75
+    leg is a 25% haircut and must be visible where the decision is made, not
+    only in ratios.yaml.
+    """
+    if ratio <= 0:
+        return "1:0"
+    if abs(ratio - round(ratio)) < 1e-9:
+        return f"1:{int(round(ratio))}"
+    # 0.333 -> 3:1 reads far better than 1:0.33 for hotel-style ratios.
+    inverse = 1.0 / ratio
+    if abs(inverse - round(inverse)) < 0.02 and inverse > 1:
+        return f"{int(round(inverse))}:1"
+    return f"1:{ratio:g}"
+
+
 def _hop_label(node: str, edge: dict, graph: nx.MultiDiGraph) -> str:
-    """Human label for one transfer hop, including bonus + alliance annotation."""
+    """Human label for one transfer hop: ratio, bonus, and alliance."""
     name = node.replace("_", " ").title()
+    ratio = edge.get("ratio", edge.get("effective_ratio", 1.0))
+    base = f"{name} ({format_ratio(float(ratio))}"
+
     label = edge.get("bonus_label")
     if label:
-        base = f"{name} ({label})"
+        base = f"{base}, {label})"
     elif edge.get("bonus_multiplier", 1.0) != 1.0:
         pct = int(round((edge["bonus_multiplier"] - 1.0) * 100))
-        base = f"{name} (+{pct}% bonus)"
+        base = f"{base}, +{pct}% bonus)"
     else:
-        base = name
+        base = f"{base})"
 
     alliance_name = None
     if node in graph.nodes:
@@ -300,4 +323,6 @@ def _price_path(
         transfer_hops=transfer_hops,
         settlement_minutes=settlement_minutes,
         gates=gates,
+        hop_ratios=[float(r) for r in ratios],
+        effective_ratio=round(float(eff_ratio), 6),
     )

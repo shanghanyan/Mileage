@@ -23,6 +23,7 @@ the log itself (not just console output that scrolls away).
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import time
@@ -271,10 +272,17 @@ def _append_run_banner(
     was authoritative, or that one was a 0.03s cache hit and the other a 15.8s
     fresh fetch. Both facts are recorded now.
     """
+    # Whether ANY live award-space provider was configured for this run. Without
+    # it the only L3 data is a 2-row offline fixture, so every `no_space` in the
+    # log below means "the fixture didn't cover this", not "there are no seats".
+    # Twelve days of sweeps read as scarce award space when the real finding was
+    # an unconfigured provider; the log now says which one it is.
+    award_api = bool(os.environ.get("SEATS_AERO_API_KEY"))
     banner = {
         "type": "run_meta",
         "ts": stamp.isoformat(),
         "snapshot": snapshot,
+        "award_api_configured": award_api,
         **redis_status,
     }
     with jsonl_path.open("a", encoding="utf-8") as fh:
@@ -291,7 +299,15 @@ def _append_run_banner(
         lines.append(f"### ✅ Run @ {banner['ts']} — Redis wiped: {redis_status['redis_wipe_note']}\n")
     else:
         lines.append(f"### Run @ {banner['ts']} — Redis: {redis_status['redis_wipe_note']}\n")
-    lines.append(f"Knowledge snapshot: `{snapshot}`\n\n")
+    lines.append(f"Knowledge snapshot: `{snapshot}`\n")
+    if award_api:
+        lines.append("Award space: **live provider configured** (seats.aero)\n\n")
+    else:
+        lines.append(
+            "⚠️ Award space: **no live provider** — SEATS_AERO_API_KEY unset, so L3 "
+            "is a 2-row offline fixture. Read every `no_space` below as "
+            "*not covered by the fixture*, NOT as *no seats exist*.\n\n"
+        )
     with md_path.open("a", encoding="utf-8") as fh:
         fh.writelines(lines)
 
@@ -372,6 +388,11 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
                 config=cfg,
                 start_date=window_start.isoformat(),
                 end_date=window_end.isoformat(),
+                # The sweep observes the engine; it does not advise anyone. A
+                # 1.5x reach cap is right for a user and wrong here, because a
+                # capped sweep cannot tell "the engine found nothing" from
+                # "the engine found things and the cap hid them".
+                reach_multiple=math.inf,
             )
             payload = quote_result_to_dict(result)
         except Exception as exc:
@@ -408,6 +429,13 @@ def run_beta_daily_sweep(*, limit: Optional[int] = None) -> dict[str, Any]:
             "coverage": payload.get("coverage"),
             "options_considered": payload.get("options_considered"),
             "options_shown": payload.get("options_shown"),
+            # Priced, then dropped for costing >1.5x the balance. Logged so
+            # "no bookable option" can never again be indistinguishable from
+            # "every option cost more than you hold".
+            "options_out_of_reach": payload.get("options_out_of_reach"),
+            # §4.1 requirements anyone can satisfy — a card application, a new
+            # airline account. Reported, never used to filter.
+            "easy_unlocks": payload.get("easy_unlocks"),
             # §6.3 — gated routes are never hidden, so they are never omitted
             # from the log either. A run with 0 shown options and 10 gated ones
             # is a completely different result from a run that found nothing.
@@ -472,13 +500,27 @@ def _append_markdown_summary(path: Path, row: dict[str, Any], *, header: bool) -
             cpp = f"{opt['cpp']}¢/pt" if opt.get("cpp") is not None else "cpp n/a"
             paid = opt.get("price_paid_usd")
             paid_bit = f"${paid:,.0f}" if paid is not None else "$?"
+            # A row the user cannot afford today is shown, but never without
+            # saying so — the label alone reads as a recommendation.
+            short = opt.get("shortfall_points")
+            reach_bit = f" · REACH: {short:,} pts short" if short else ""
             lines.append(
                 f"- **#{j}** {opt.get('label')} — {opt.get('source_points'):,} pts · "
-                f"{paid_bit} · {cpp} · {opt.get('space') or '?'} [{flags}]\n"
+                f"{paid_bit} · {cpp} · {opt.get('space') or '?'}{reach_bit} [{flags}]\n"
             )
         for entry in row.get("gated_summary") or []:
             lines.append(
                 f"- **gated:** {entry['routes']} route(s) {entry['requirement']}\n"
+            )
+        for entry in row.get("easy_unlocks") or []:
+            lines.append(
+                f"- **easy unlock:** {entry['routes']} route(s) — "
+                f"{entry['requirement']}\n"
+            )
+        beyond = row.get("options_out_of_reach")
+        if beyond:
+            lines.append(
+                f"- _{beyond} more option(s) priced but beyond 1.5x your balance_\n"
             )
         if not (row.get("top3") or row.get("gated_summary")):
             # An empty list is a real answer here — "nothing you hold can book
