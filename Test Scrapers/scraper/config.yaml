@@ -1,0 +1,57 @@
+# Pilot crawl: United Airlines + United credit cards + Capital One credit cards
+
+vision_model: llava
+vision_timeout_seconds: 30
+ollama_host: http://localhost:11434
+
+crawl:
+  max_runtime_seconds: 3600  # stop after 1 hour (exports partial CSV)
+  sitemap_discovery: true
+  headless: false  # false = visible Chromium window while crawling
+  browser_slow_mo_ms: 80  # pause between Playwright actions (headed mode only)
+
+rate_limit:
+  default_min_seconds: 3
+  default_max_seconds: 8
+
+aggregator_domains: []
+
+url_blocklist:
+  - /careers/
+  - /legal/
+  - /accessibility/
+  - /pressroom/
+  - /investor-relations/
+  - /sitemap
+  - robots.txt
+  - logout
+  - signin
+  - login
+  - account
+  - booking/confirm
+
+scope:
+  united.com:
+    max_depth: 4
+    max_pages: 200
+  capitalone.com:
+    max_depth: 3
+    max_pages: 80
+    path_prefix: /credit-cards
+
+seeds:
+  united.com:
+    program: united
+    urls:
+      - https://www.united.com
+      - https://www.united.com/ual/en/us/fly/mileageplus.html
+      - https://www.united.com/ual/en/us/fly/mileageplus/earn/credit-cards.html
+      - https://www.united.com/ual/en/us/fly/mileageplus/awards/award-chart.html
+      - https://www.united.com/ual/en/us/fly/mileageplus/awards/airline-partners.html
+      - https://www.united.com/ual/en/us/fly/travel/airline-partners.html
+  capitalone.com:
+    program: capitalone
+    urls:
+      - https://www.capitalone.com/credit-cards/
+      - https://www.capitalone.com/credit-cards/miles/
+      - https://www.capitalone.com/credit-cards/compare/

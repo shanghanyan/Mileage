@@ -1,0 +1,9 @@
+capitalone_venture_partners:
+  canonical: https://www.capitalone.com/learn-grow/money-management/venture-miles-transfer-partnerships/
+  alias: scrape://capitalone/venture-partners
+cathay_mega_miles_2026:
+  canonical: https://www.cathaypacific.com/cx/en_US/offers/Mega-Miles-2026.html
+  alias: scrape://cathay/mega-miles-2026
+jal_partner_point:
+  canonical: https://www.jal.co.jp/arl/en/sr/jalmile/partner/point/
+  alias: scrape://jal/partner-point

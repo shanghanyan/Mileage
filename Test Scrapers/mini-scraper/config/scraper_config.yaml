@@ -1,0 +1,69 @@
+scrapers:
+  capital_one:
+    url: "https://www.capitalone.com/learn-grow/money-management/venture-miles-transfer-partnerships/"
+    method: playwright
+    timeout_seconds: 30
+    wait_selector: "table, [class*='partner'], [class*='transfer']"
+
+  lifemiles:
+    url: "https://www.lifemiles.com/use/redeem-miles/flights"
+    method: vision
+    timeout_seconds: 45
+    wait_selector: "[class*='award'], table, [class*='chart']"
+    screenshot_crop: [0, 250, 1920, 1200]
+
+  turkish:
+    url: "https://www.turkishairlines.com/en-us/miles-smiles/award-tickets/award-ticket-charts/"
+    method: vision
+    timeout_seconds: 45
+    wait_selector: "table, [class*='award']"
+    screenshot_crop: [0, 150, 1920, 1400]
+
+  krisflyer:
+    url: "https://www.singaporeair.com/en_UK/us/ppsclub-krisflyer/miles-usage/saver-flight-awards/"
+    method: playwright_bs4
+    timeout_seconds: 40
+    wait_selector: "table"
+
+  aeroplan:
+    url: "https://www.aircanada.com/us/en/aco/home/aeroplan/redeeming/flight-rewards.html"
+    method: playwright_bs4
+    timeout_seconds: 35
+    wait_selector: "table, [class*='reward']"
+
+  tpg:
+    url: "https://thepointsguy.com/loyalty-programs/capital-one-transfer-partners/"
+    method: playwright_bs4
+    timeout_seconds: 30
+    # Scoped to main content: bare "article" matched a hidden nav dropdown first.
+    wait_selector: "main table, article table"
+  tpg_valuations:
+    url: "https://thepointsguy.com/loyalty-programs/monthly-valuations/"
+    method: playwright_bs4
+    timeout_seconds: 30
+    wait_selector: "main table, article table"
+
+  nerdwallet:
+    url: "https://www.nerdwallet.com/article/travel/capital-one-transfer-partners"
+    method: playwright_bs4
+    timeout_seconds: 30
+    wait_selector: "table, [class*='comparison'], dl"
+
+  awardwallet:
+    # /news/ now 404s; AwardWallet moved its articles to /learn/
+    # (/blog/ → /learn → https://awardwallet.com/learn/). Verified 2026-06-04.
+    url: "https://awardwallet.com/learn/"
+    method: httpx_bs4
+    timeout_seconds: 20
+
+  awardfares:
+    url: "https://awardfares.com/programs/avianca-lifemiles"
+    method: playwright_bs4
+    timeout_seconds: 35
+    wait_selector: "[class*='program'], table, [class*='award']"
+
+retry:
+  max_attempts: 3
+  wait_min_seconds: 5
+  wait_max_seconds: 30
+  backoff_multiplier: 2.0

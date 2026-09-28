@@ -1,0 +1,178 @@
+{
+  "capital_one_scraper": {
+    "partners": [
+      {
+        "name": "Avianca LifeMiles",
+        "ratio": 1.0
+      },
+      {
+        "name": "Air Canada Aeroplan",
+        "ratio": 1.0
+      },
+      {
+        "name": "Cathay Pacific",
+        "ratio": 1.0
+      },
+      {
+        "name": "Emirates Skywards",
+        "ratio": 0.75
+      },
+      {
+        "name": "EVA Air",
+        "ratio": 0.75
+      },
+      {
+        "name": "Japan Airlines",
+        "ratio": 0.75
+      },
+      {
+        "name": "JetBlue",
+        "ratio": 0.6
+      },
+      {
+        "name": "Accor",
+        "ratio": 0.5
+      },
+      {
+        "name": "Wyndham",
+        "ratio": 1.0
+      }
+    ],
+    "scraped_at": "2026-06-04T23:20:59.807870+00:00"
+  },
+  "lifemiles_scraper": {
+    "rows": [
+      {
+        "origin_zone": "US",
+        "destination_zone": "US",
+        "economy_miles": 12100,
+        "business_miles": 22000,
+        "first_miles": null
+      },
+      {
+        "origin_zone": "US",
+        "destination_zone": "Europe",
+        "economy_miles": 30000,
+        "business_miles": 55000,
+        "first_miles": null
+      },
+      {
+        "origin_zone": "US",
+        "destination_zone": "Asia",
+        "economy_miles": 40000,
+        "business_miles": 75000,
+        "first_miles": null
+      }
+    ],
+    "scraped_at": "2026-06-03T10:00:00Z"
+  },
+  "turkish_scraper": {
+    "rows": [
+      {
+        "region_from": "US",
+        "region_to": "US",
+        "economy_miles": 7500,
+        "business_miles": 12500
+      },
+      {
+        "region_from": "US",
+        "region_to": "Europe",
+        "economy_miles": 15000,
+        "business_miles": 25000
+      },
+      {
+        "region_from": "US",
+        "region_to": "Asia",
+        "economy_miles": 22500,
+        "business_miles": 37500
+      }
+    ],
+    "scraped_at": "2026-06-03T10:00:00Z"
+  },
+  "awardwallet_scraper": {
+    "articles": [
+      {
+        "headline": "Airline Programs",
+        "url": "https://awardwallet.com/learn/american-aadvantage",
+        "date": "",
+        "programs": [
+          "lifemiles_scraper"
+        ],
+        "is_alert": true
+      },
+      {
+        "headline": "Airline Programs",
+        "url": "https://awardwallet.com/learn/american-aadvantage",
+        "date": "",
+        "programs": [
+          "lifemiles_scraper"
+        ],
+        "is_alert": true
+      },
+      {
+        "headline": "American AAdvantage",
+        "url": "https://awardwallet.com/learn/american-aadvantage",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      },
+      {
+        "headline": "United MileagePlus",
+        "url": "https://awardwallet.com/learn/united-mileageplus",
+        "date": "",
+        "programs": [
+          "lifemiles_scraper"
+        ],
+        "is_alert": true
+      },
+      {
+        "headline": "Delta SkyMiles",
+        "url": "https://awardwallet.com/learn/delta-skymiles",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      },
+      {
+        "headline": "British Airways Club",
+        "url": "https://awardwallet.com/learn/british-airways-club",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      },
+      {
+        "headline": "Southwest Rapid Rewards",
+        "url": "https://awardwallet.com/learn/southwest-rapid-rewards",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      },
+      {
+        "headline": "JetBlue TrueBlue",
+        "url": "https://awardwallet.com/learn/jetblue-trueblue",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      },
+      {
+        "headline": "Alaska Mileage Plan",
+        "url": "https://awardwallet.com/learn/alaska-mileage-plan",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      },
+      {
+        "headline": "Hotel Programs",
+        "url": "https://awardwallet.com/learn/marriott-bonvoy",
+        "date": "",
+        "programs": [],
+        "is_alert": false
+      }
+    ],
+    "scraped_at": "2026-06-04T23:20:59.807870+00:00"
+  },
+  "awardfares_scraper": {
+    "awardfares_avg_miles": 10000,
+    "awardfares_note": "inferred miles from page text",
+    "scraped_at": "2026-06-04T22:11:58.280502+00:00"
+  }
+}

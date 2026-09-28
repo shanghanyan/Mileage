@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "timestamp": "2026-01-25T19:32:40.750164",
+    "scraper_version": "4.0_ollama",
+    "model": "llama3.1"
+  },
+  "partners": {
+    "airlines": [],
+    "hotels": [],
+    "car_rentals": [],
+    "other": [
+      {
+        "name": "Star Alliance",
+        "category": "other"
+      }
+    ]
+  },
+  "promotions": [],
+  "earning_rules": [
+    {
+      "category": "base_earning",
+      "description": "Earn miles based on the fare of your ticket.",
+      "rate": null
+    },
+    {
+      "category": "elite_bonus",
+      "description": "Elite members earn bonus miles based on their status level.",
+      "rate": null
+    },
+    {
+      "category": "partner_earning",
+      "description": "Earn miles when flying with United's airline partners.",
+      "rate": null
+    },
+    {
+      "category": "credit_card_bonus",
+      "description": "Earn bonus miles and other rewards with a United credit card.",
+      "rate": null
+    }
+  ],
+  "award_chart": []
+}

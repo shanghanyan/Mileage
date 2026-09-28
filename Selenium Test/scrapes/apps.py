@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class ScrapesConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "scrapes"
+    verbose_name = "Scrape exports"

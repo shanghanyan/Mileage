@@ -1,0 +1,29 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+.env
+.env.local
+vm_profile.json
+SESSION_COOKIES/
+*.sqlite3
+db.sqlite3
+
+artifacts/
+!artifacts/.gitkeep
+test results/
+Test Results/
+test-results/
+
+# Django
+/staticfiles/
+/media/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
