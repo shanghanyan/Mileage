@@ -1,0 +1,105 @@
+# RSS/Atom feeds for award chart data — polled in parallel with HTTP scraping.
+# Prefer feeds from sites that bot-block live pages (10xTravel, OMAAT, etc.).
+# Keywords filter entries to the relevant program before parsing.
+
+lifemiles:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [lifemiles, avianca, "life miles"]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [lifemiles, avianca]
+  - url: "https://frequentmiler.com/feed/"
+    keywords: [lifemiles, avianca]
+
+aeroplan:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [aeroplan, "air canada"]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [aeroplan, "air canada"]
+  - url: "https://milesbeyondborders.com/feed/"
+    keywords: [aeroplan]
+
+turkish_miles:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [turkish, "miles & smiles", "miles and smiles"]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [turkish, "miles and smiles"]
+
+ana_mileage:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [ana, "mileage club"]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [ana, "mileage club"]
+
+krisflyer:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [krisflyer, "singapore airlines", "singapore air"]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [krisflyer, singapore]
+
+avios:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [avios, "british airways", ba avios]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [avios, "british airways"]
+
+asia_miles:
+  - url: "https://10xtravel.com/feed/"
+    keywords: ["asia miles", "cathay", cathay]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: ["asia miles", cathay]
+
+jal:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [jal, "japan airlines", "mileage bank"]
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [jal, "japan airlines"]
+
+qatar:
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [qatar, "privilege club"]
+  - url: "https://10xtravel.com/feed/"
+    keywords: [qatar, "privilege club"]
+
+qantas:
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [qantas, "frequent flyer"]
+  - url: "https://10xtravel.com/feed/"
+    keywords: [qantas]
+
+eva_air:
+  - url: "https://onemileatatime.com/feed/"
+    keywords: [eva, "infinity mileagelands", "mileagelands"]
+  - url: "https://10xtravel.com/feed/"
+    keywords: [eva, "infinity mileagelands"]
+
+flying_blue:
+  - url: "https://10xtravel.com/feed/"
+    keywords: ["flying blue", "air france", klm]
+
+emirates:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [emirates, skywards]
+
+etihad:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [etihad, "etihad guest"]
+
+aeromexico:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [aeromexico, "club premier"]
+
+finnair:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [finnair]
+
+tap:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [tap, "miles&go", "miles and go"]
+
+virgin_red:
+  - url: "https://onemileatatime.com/feed/"
+    keywords: ["virgin red", "virgin atlantic"]
+
+jetblue:
+  - url: "https://10xtravel.com/feed/"
+    keywords: [jetblue, trueblue]

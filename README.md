@@ -119,7 +119,7 @@ pip install -e ".[observability]"   # traces
 
 ## 3. Selenium Test
 
-Static charts yield to HTTP. JavaScript pages and Akamai blocks do not. [`Selenium Test/`](Selenium%20Test/) is a one-time scrape of three public conversion pages, run on a small Ubuntu VPS because Chrome needs about 4 GB of RAM. A $5 / 1 GB cloud box runs out of memory. Hetzner CX23 (2 vCPU, 4 GB, hourly) is the box that fits; DigitalOcean and Linode need their 4 GB plans (~$24/mo) before Chrome is usable.
+[`Selenium Test/`](Selenium%20Test/) opens the live pages — Capital One’s Venture transfer partners, Cathay Pacific’s miles-conversion offers, and JAL’s partner point chart — on a Hetzner CX23 (Ubuntu, 2 vCPU, 4 GB, billed hourly). Chrome needs about 4 GB, so a $5 / 1 GB droplet runs out of memory, and DigitalOcean or Linode only fit once you step up to their ~$24 4 GB plans. Selenium drives real Chrome and Firefox on that server through Xvfb, a virtual display, because the machine has no monitor. Each site walks a planned fallback and stops at the first method that returns a conversion chart: a plain HTTP fetch when the ratios are already in the HTML, then Selenium Chrome on the VPS IP for JavaScript and Akamai pages, then Firefox over Tor if Chrome is blocked, then a saved login session only if the page requires sign-in.
 
 | Site | Page |
 |---|---|

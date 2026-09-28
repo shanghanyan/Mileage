@@ -1,0 +1,30 @@
+name: URL Health Check
+
+on:
+  schedule:
+    # First Monday of each month at 09:00 UTC
+    - cron: "0 9 1-7 * 1"
+  workflow_dispatch:
+
+jobs:
+  check-urls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: HEAD-check scrape target URLs
+        run: python -m scrapers.validate_urls --fail-on-bad --report logs/url_health.json
+
+      - name: Upload health report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: url-health-report
+          path: logs/url_health.json

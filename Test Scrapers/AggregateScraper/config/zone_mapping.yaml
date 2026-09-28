@@ -1,0 +1,88 @@
+# Airport IATA → program-specific zone name.
+# Update after chart re-scrapes / devaluations. No airport = path omitted.
+
+lifemiles:
+  JFK: "Cluster 1"
+  LAX: "Cluster 1"
+  ORD: "Cluster 1"
+  SFO: "Cluster 1"
+  IAD: "Cluster 1"
+  LHR: "Cluster 3"
+  FRA: "Cluster 3"
+  CDG: "Cluster 3"
+  NRT: "Cluster 5"
+  HND: "Cluster 5"
+  SYD: "Cluster 6"
+  SIN: "Cluster 5"
+
+aeroplan:
+  JFK: "Zone A"
+  LAX: "Zone A"
+  ORD: "Zone A"
+  SFO: "Zone A"
+  LHR: "Zone C"
+  FRA: "Zone C"
+  NRT: "Zone D"
+  HND: "Zone D"
+  SYD: "Zone E"
+
+turkish_miles:
+  JFK: "Americas Zone 1"
+  LAX: "Americas Zone 2"
+  ORD: "Americas Zone 1"
+  LHR: "Europe"
+  FRA: "Europe"
+  NRT: "Far East"
+  HND: "Far East"
+
+ana_mileage:
+  JFK: "Zone 4"
+  LAX: "Zone 4"
+  ORD: "Zone 4"
+  LHR: "Zone 3"
+  FRA: "Zone 3"
+  NRT: "Zone 1"
+  HND: "Zone 1"
+  SYD: "Zone 2"
+
+krisflyer:
+  JFK: "Zone 6"
+  LAX: "Zone 6"
+  ORD: "Zone 6"
+  LHR: "Zone 5"
+  FRA: "Zone 5"
+  NRT: "Zone 4"
+  HND: "Zone 4"
+  SYD: "Zone 3"
+
+avios:
+  JFK: "North America"
+  LAX: "North America"
+  NRT: "Japan"
+  HND: "Japan"
+
+asia_miles:
+  JFK: "North America"
+  LAX: "North America"
+  NRT: "Japan"
+  HND: "Japan"
+
+jal:
+  JFK: "Zone 1"
+  LAX: "Zone 1"
+  NRT: "Zone 1"
+  HND: "Zone 1"
+
+qatar:
+  JFK: "Americas"
+  NRT: "Asia"
+
+qantas:
+  JFK: "Americas"
+  NRT: "Asia"
+
+eva_air:
+  JFK: "North America"
+  LAX: "North America"
+  NRT: "Japan"
+  HND: "Japan"

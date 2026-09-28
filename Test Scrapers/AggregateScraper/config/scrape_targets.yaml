@@ -1,0 +1,150 @@
+# Ordered by reliability. Dead 404 URLs removed — do not re-add without CI HEAD check.
+# fetch_via: wayback_only — skip live fetch; pull latest archive.org snapshot (bot-blocked sites).
+# bot_blocked: true — skip entirely (no reliable archive; use RSS or fallback_rates instead).
+
+lifemiles:
+  - url: "https://upgradedpoints.com/travel/airlines/best-ways-to-redeem-avianca-vuela-lifemiles/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/avianca-lifemiles/avianca-lifemiles-sweet-spots/"
+    parser: blog_table
+  - url: "https://10xtravel.com/avianca-lifemiles-award-chart/"
+    parser: blog_table
+  - url: "https://frequentmiler.com/how-to-maximize-avianca-lifemiles/"
+    parser: blog_prose
+    fetch_via: wayback_only
+  - url: "https://onemileatatime.com/guides/redeem-lifemiles/"
+    parser: blog_prose
+    fetch_via: wayback_only
+  - url: "https://thriftytraveler.com/guides/points/avianca-lifemiles-sweet-spots/"
+    parser: blog_table
+    fetch_via: wayback_only
+
+aeroplan:
+  - url: "https://milesbeyondborders.com/aeroplan-partner-award-chart-changes-2026/"
+    parser: blog_table
+  - url: "https://10xtravel.com/air-canada-aeroplan-award-charts/"
+    parser: blog_table
+  - url: "https://upgradedpoints.com/travel/airlines/best-ways-to-use-aeroplan-miles/"
+    parser: blog_table
+  - url: "https://milesopedia.com/en/reward-program/aeroplan/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/air-canada-aeroplan/"
+    parser: blog_table
+
+turkish_miles:
+  - url: "https://awardwallet.com/airlines/turkish-airlines-award-chart/"
+    parser: blog_table
+  - url: "https://upgradedpoints.com/travel/airlines/best-ways-to-redeem-turkish-airlines-miles-smiles/"
+    parser: blog_table
+  - url: "https://10xtravel.com/turkish-airlines-award-charts/"
+    parser: blog_table
+  - url: "https://frequentmiler.com/best-uses-for-turkish-miles-smiles-miles/"
+    parser: blog_prose
+    fetch_via: wayback_only
+
+ana_mileage:
+  - url: "https://10xtravel.com/ana-mileage-club-award-charts/"
+    parser: blog_table
+    rt_ow_context: round_trip
+  - url: "https://awardwallet.com/airlines/ana-mileage-club/"
+    parser: blog_table
+    rt_ow_context: round_trip
+  - url: "https://frequentmiler.com/ana-mileage-club-sweet-spots/"
+    parser: blog_prose
+    rt_ow_context: round_trip
+    fetch_via: wayback_only
+
+krisflyer:
+  - url: "https://10xtravel.com/singapore-airlines-krisflyer-award-charts/"
+    parser: blog_table
+  - url: "https://www.singaporeair.com/content/dam/sia/web-assets/pdfs/ppsclub-krisflyer/krisflyer/progupdates/awardcharts/SingaporeAirlinesOne-WayAdvantageSaverAwardChartupdated1Nov25.pdf"
+    parser: pdf_chart
+
+avios:
+  - url: "https://10xtravel.com/british-airways-club-award-charts/"
+    parser: blog_table
+    also_programs: [qatar]
+  - url: "https://awardtravelfinder.com/award-charts/british-airways"
+    parser: awardtravelfinder
+
+asia_miles:
+  - url: "https://10xtravel.com/cathay-pacific-asia-miles-award-chart/"
+    parser: blog_table
+
+jal:
+  - url: "https://www.jal.co.jp/ar/en/ar/jalmile/use/partner_air/p_jmb/jmb_mile_ar.html"
+    parser: blog_table
+  - url: "https://10xtravel.com/japan-airlines-jal-mileage-bank-award-charts/"
+    parser: blog_table
+
+qatar:
+  # Shares Avios currency — rows tagged from avios sources via also_programs
+
+qantas:
+  - url: "https://10xtravel.com/qantas-frequent-flyer-award-charts/"
+    parser: blog_table
+
+flying_blue:
+  - url: "https://upgradedpoints.com/travel/airlines/air-france-klm-flying-blue-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/air-france-klm-flying-blue/"
+    parser: blog_table
+
+eva_air:
+  - url: "https://10xtravel.com/eva-air-infinity-mileagelands-award-charts/"
+    parser: blog_table
+  - url: "https://www.evaair.com/en-us/infinity-mileagelands/mileage-award-program/mileage-redemption/award-ticket/star-alliance/"
+    parser: blog_table
+
+emirates:
+  - url: "https://upgradedpoints.com/travel/airlines/emirates-skywards-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/emirates-skywards/"
+    parser: blog_table
+
+etihad:
+  - url: "https://upgradedpoints.com/travel/airlines/etihad-guest-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/etihad-guest/"
+    parser: blog_table
+
+aeromexico:
+  - url: "https://upgradedpoints.com/travel/airlines/aeromexico-club-premier-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/aeromexico-club-premier/"
+    parser: blog_table
+
+finnair:
+  - url: "https://upgradedpoints.com/travel/airlines/finnair-plus-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/finnair-plus/"
+    parser: blog_table
+
+tap:
+  - url: "https://upgradedpoints.com/travel/airlines/tap-miles-go-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/tap-air-portugal-miles-go/"
+    parser: blog_table
+
+virgin_red:
+  - url: "https://upgradedpoints.com/travel/airlines/virgin-red-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/virgin-red/"
+    parser: blog_table
+
+jetblue:
+  - url: "https://upgradedpoints.com/travel/airlines/jetblue-trueblue-award-chart/"
+    parser: blog_table
+  - url: "https://awardwallet.com/airlines/jetblue-trueblue/"
+    parser: blog_table
+
+c1_transfer_partners:
+  - url: "https://www.capitalone.com/learn-grow/money-management/venture-miles-transfer-partnerships/"
+    parser: c1_official
+    fetch_via: wayback_only
+  - url: "https://thepointsguy.com/loyalty-programs/capital-one-transfer-partners/"
+    parser: blog_table
+    fetch_via: wayback_only
+  - url: "https://www.nerdwallet.com/travel/learn/capital-one-transfer-partners-guide"
+    parser: blog_table
+    fetch_via: wayback_only

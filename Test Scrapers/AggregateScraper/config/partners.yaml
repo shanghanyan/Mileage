@@ -1,0 +1,203 @@
+# Capital One Venture / Venture X transfer partners as of 2025-09-23.
+# effective_ratio: partner_miles = floor(c1_miles * effective_ratio)
+# C1 miles required = ceil(partner_miles / effective_ratio)
+
+airlines:
+  - id: aeroplan
+    name: Air Canada Aeroplan
+    alliance: Star Alliance
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["UA", "NH"]}
+    pricing_basis: one_way
+
+  - id: lifemiles
+    name: Avianca LifeMiles
+    alliance: Star Alliance
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["UA", "NH"]}
+    pricing_basis: one_way
+
+  - id: turkish_miles
+    name: Turkish Airlines Miles&Smiles
+    alliance: Star Alliance
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["UA", "NH"]}
+    pricing_basis: one_way
+
+  - id: ana_mileage
+    name: ANA Mileage Club
+    alliance: Star Alliance
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["NH"]}
+    pricing_basis: one_way
+    rt_chart_ow_divisor: 2
+
+  - id: krisflyer
+    name: Singapore Airlines KrisFlyer
+    alliance: Star Alliance
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["SQ"]}
+    routing_type: connecting
+    connection_hub: SIN
+    pricing_basis: one_way
+
+  - id: avios
+    name: British Airways Avios
+    alliance: oneworld
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["JL"]}
+    pricing_basis: one_way
+    surcharge_warning: true
+    surcharge_estimate_usd: 600
+
+  - id: asia_miles
+    name: Cathay Pacific Asia Miles
+    alliance: oneworld
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["JL", "CX"]}
+    pricing_basis: one_way
+
+  - id: jal
+    name: Japan Airlines Mileage Bank
+    alliance: oneworld
+    c1_ratio: "2:1.5"
+    effective_ratio: 0.750
+    transfer_time_days: 3
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["JL"]}
+    pricing_basis: one_way
+    added: "2025-09-23"
+
+  - id: qatar
+    name: Qatar Airways Privilege Club
+    alliance: oneworld
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["JL"]}
+    added: "2025-09-23"
+
+  - id: qantas
+    name: Qantas Frequent Flyer
+    alliance: oneworld
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["JL"]}
+
+  - id: flying_blue
+    name: Air France–KLM Flying Blue
+    alliance: SkyTeam
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: false
+
+  - id: eva_air
+    name: EVA Air Infinity MileageLands
+    alliance: Star Alliance
+    c1_ratio: "2:1.5"
+    effective_ratio: 0.750
+    transfer_time_days: 2
+    relevant_for_transpacific: true
+    primary_carriers: {JFK_NRT: ["BR"]}
+    routing_type: connecting
+    connection_hub: TPE
+
+  - id: finnair
+    name: Finnair Plus
+    alliance: oneworld
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: false
+
+  - id: aeromexico
+    name: Aeromexico Club Premier
+    alliance: SkyTeam
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 1
+    relevant_for_transpacific: false
+
+  - id: emirates
+    name: Emirates Skywards
+    alliance: none
+    c1_ratio: "2:1.5"
+    effective_ratio: 0.750
+    transfer_time_days: 2
+    relevant_for_transpacific: false
+
+  - id: etihad
+    name: Etihad Guest
+    alliance: none
+    c1_ratio: "2:1.5"
+    effective_ratio: 0.750
+    transfer_time_days: 2
+    relevant_for_transpacific: false
+
+  - id: tap
+    name: TAP Air Portugal Miles&Go
+    alliance: Star Alliance
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: false
+
+  - id: virgin_red
+    name: Virgin Red
+    alliance: none
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+    transfer_time_days: 2
+    relevant_for_transpacific: false
+
+  - id: jetblue
+    name: JetBlue TrueBlue
+    alliance: none
+    c1_ratio: "5:3"
+    effective_ratio: 0.600
+    transfer_time_days: 0
+    relevant_for_transpacific: false
+
+hotels:
+  - id: accor
+    name: Accor Live Limitless
+    c1_ratio: "2:1"
+    effective_ratio: 0.500
+  - id: choice
+    name: Choice Privileges
+    c1_ratio: "1:1"
+    effective_ratio: 1.000
+  - id: iprefer
+    name: I Prefer Hotel Rewards
+    c1_ratio: "1:2"
+    effective_ratio: 2.000
+    added: "2025-09-23"
+  - id: wyndham
+    name: Wyndham Rewards
+    c1_ratio: "1:1"
+    effective_ratio: 1.000

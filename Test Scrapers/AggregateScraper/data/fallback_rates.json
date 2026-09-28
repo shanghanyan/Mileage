@@ -1,0 +1,139 @@
+{
+  "_meta": {
+    "description": "Last-known-good award rates. Used when all scrapers fail. Treat as low-trust (0.30).",
+    "last_updated": "2026-06-17"
+  },
+  "lifemiles": {
+    "NA_to_North_Asia_J": {
+      "miles": 90000,
+      "trust": 0.55,
+      "range_low": 85000,
+      "range_high": 100000,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 0,
+      "note": "Post-April-2026 devaluation. Dynamic-ish pricing; 90K is modal rate on United/ANA JFK-NRT.",
+      "source": "https://frequentmiler.com/how-to-maximize-avianca-lifemiles/",
+      "verified_date": "2026-04-27"
+    }
+  },
+  "aeroplan": {
+    "JFK_to_NRT_J_United": {
+      "miles": 75000,
+      "trust": 0.65,
+      "range_low": 70000,
+      "range_high": 85000,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 0,
+      "note": "Distance-based. JFK-NRT ~6740mi.",
+      "source": "https://milesbeyondborders.com/aeroplan-partner-award-chart-changes-2026/",
+      "verified_date": "2026-04-27"
+    }
+  },
+  "turkish_miles": {
+    "NA_to_Far_East_J_partner": {
+      "miles": 87500,
+      "trust": 0.40,
+      "range_low": 80000,
+      "range_high": 95000,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 200,
+      "note": "Post-2024 devaluation estimate.",
+      "source": "https://awardwallet.com/airlines/turkish-airlines-award-chart/",
+      "verified_date": "2026-02-26"
+    }
+  },
+  "ana_mileage": {
+    "JFK_to_NRT_J_own_metal_one_way": {
+      "miles": 43000,
+      "trust": 0.60,
+      "range_low": 37500,
+      "range_high": 44000,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 50,
+      "note": "ANA own metal JFK-NRT. One-way at ~half RT price since June 2025.",
+      "source": "https://www.ana.co.jp/en/us/amc/international-flight-awards/",
+      "verified_date": "2026-01-27"
+    }
+  },
+  "krisflyer": {
+    "JFK_to_NRT_J_via_SIN": {
+      "miles": 86000,
+      "trust": 0.40,
+      "pricing_basis": "one_way",
+      "routing": "JFK-SIN-NRT",
+      "surcharges_usd": 100,
+      "note": "SQ connecting via SIN. No nonstop option.",
+      "source": "https://upgradedpoints.com/travel/airlines/singapore-krisflyer-award-chart/",
+      "verified_date": "2025-09-01"
+    }
+  },
+  "avios": {
+    "JFK_to_NRT_J_JAL": {
+      "miles": 58500,
+      "trust": 0.50,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 600,
+      "note": "Distance-based Avios. JAL nonstop JFK-NRT.",
+      "source": "https://upgradedpoints.com/travel/airlines/british-airways-avios-award-chart/",
+      "verified_date": "2025-09-14"
+    }
+  },
+  "asia_miles": {
+    "JFK_to_NRT_J_JAL": {
+      "miles": 60000,
+      "trust": 0.45,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 0,
+      "note": "Asia Miles on JAL metal JFK-NRT.",
+      "source": "https://upgradedpoints.com/travel/airlines/cathay-pacific-asia-miles-award-chart/",
+      "verified_date": "2025-09-14"
+    }
+  },
+  "jal": {
+    "JFK_to_NRT_J_own_metal": {
+      "partner_miles": 60000,
+      "c1_miles_required": 80000,
+      "trust": 0.40,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 100,
+      "note": "JAL own metal. C1 ratio 2:1.5 means 80000 C1 → 60000 JAL miles.",
+      "source": "https://10xtravel.com/japan-airlines-jal-mileage-bank-award-charts/",
+      "verified_date": "2026-03-01"
+    }
+  },
+  "qatar": {
+    "JFK_to_NRT_J_JAL": {
+      "miles": 70000,
+      "trust": 0.35,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 0,
+      "note": "Qatar Privilege Club booking JAL JFK-NRT.",
+      "source": "https://upgradedpoints.com/travel/airlines/qatar-airways-privilege-club-award-chart/",
+      "verified_date": "2026-01-01"
+    }
+  },
+  "qantas": {
+    "JFK_to_NRT_J_JAL": {
+      "miles": 72000,
+      "trust": 0.35,
+      "pricing_basis": "one_way",
+      "surcharges_usd": 0,
+      "note": "Qantas booking JAL JFK-NRT.",
+      "source": "https://upgradedpoints.com/travel/airlines/qantas-frequent-flyer-award-chart/",
+      "verified_date": "2025-12-01"
+    }
+  },
+  "eva_air": {
+    "JFK_to_NRT_J_via_TPE": {
+      "partner_miles": 65000,
+      "c1_miles_required": 86667,
+      "trust": 0.35,
+      "pricing_basis": "one_way",
+      "routing": "JFK-TPE-NRT",
+      "surcharges_usd": 50,
+      "note": "BR via Taipei. Connecting itinerary.",
+      "source": "https://upgradedpoints.com/travel/airlines/eva-air-infinity-mileagelands-award-chart/",
+      "verified_date": "2025-08-01"
+    }
+  }
+}

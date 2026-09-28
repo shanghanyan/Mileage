@@ -1,0 +1,103 @@
+# Data source URLs, selectors, and fallback chains.
+# Primary source wins on conflict; fallbacks are cross-check only.
+
+transfer_partners:
+  primary:
+    name: capitalone.com
+    url: https://www.capitalone.com/credit-cards/benefits/transfer-partners/
+    selector: "table, [class*='partner'], [class*='transfer']"
+  fallbacks:
+    - name: thepointsguy.com
+      url: https://thepointsguy.com/credit-cards/capital-one/
+      selector: "main table, article table"
+    - name: nerdwallet.com
+      url: https://www.nerdwallet.com/article/travel/capital-one-transfer-partners
+      selector: "table, dl"
+
+award_charts:
+  lifemiles:
+    program: lifemiles
+    sources:
+      - name: awardtravelfinder
+        url: https://awardtravelfinder.com/award-charts/lifemiles
+        table_selector: "table"
+      - name: 10xtravel
+        url: https://10xtravel.com/avianca-lifemiles-award-chart/
+        table_selector: "table"
+  turkish_miles:
+    program: turkish_miles
+    sources:
+      - name: awardtravelfinder
+        url: https://awardtravelfinder.com/award-charts/turkish
+        table_selector: "table"
+      - name: 10xtravel
+        url: https://10xtravel.com/turkish-airlines-miles-and-smiles-award-chart/
+        table_selector: "table"
+  krisflyer:
+    program: krisflyer
+    sources:
+      - name: awardtravelfinder
+        url: https://awardtravelfinder.com/award-charts/singapore
+        table_selector: "table"
+      - name: 10xtravel
+        url: https://10xtravel.com/singapore-krisflyer-award-chart/
+        table_selector: "table"
+  aeroplan:
+    program: aeroplan
+    sources:
+      - name: aircanada.com
+        url: https://www.aircanada.com/aeroplan/redeem/flights/partner-rewards
+        table_selector: "table"
+      - name: awardtravelfinder
+        url: https://awardtravelfinder.com/award-charts/aeroplan
+        table_selector: "table"
+  ana_mileage:
+    program: ana_mileage
+    sources:
+      - name: ana.co.jp
+        url: https://www.ana.co.jp/en/us/amc/reference/partner/award/
+        table_selector: "table"
+      - name: awardtravelfinder
+        url: https://awardtravelfinder.com/award-charts/ana
+        table_selector: "table"
+
+live_awards:
+  seats_aero:
+    base_url: https://seats.aero/api
+    cache_hours: 4
+  awardhacker:
+    url: https://www.awardhacker.com/
+    cache_hours: 24
+
+benchmarks:
+  tpg:
+    url: https://thepointsguy.com/loyalty-programs/monthly-valuations/
+    selector: "main table, article table"
+  nerdwallet:
+    url: https://www.nerdwallet.com/article/travel/points-and-miles-valuations
+    selector: "table"
+
+devaluation_feeds:
+  - name: viewfromthewing
+    url: https://viewfromthewing.com/feed/
+    keywords: [lifemiles, aeroplan, turkish, ana, krisflyer, devaluation]
+  - name: thepointsguy
+    url: https://thepointsguy.com/feed/
+    keywords: [lifemiles, aeroplan, turkish, ana, krisflyer, devaluation, change]
+  - name: flyertalk_lifemiles
+    url: https://www.flyertalk.com/forum/external.php?type=RSS2&forumids=729
+    keywords: [devaluation, change, update]
+
+refresh_schedule:
+  transfer_partners_days: 7
+  award_charts_days: 7
+  benchmarks_days: 7
+  seats_aero_hours: 4
+  cash_price_hours: 1
+
+block_signatures:
+  - "Access Denied"
+  - "cf-browser-verification"
+  - "Akamai"
+  - "Please verify you are a human"
+  - "challenge-platform"
